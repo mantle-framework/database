@@ -12,14 +12,6 @@ use function Mantle\Support\Helpers\collect;
 
 /**
  * Term Query Builder
- *
- * @template TModel of \Mantle\Database\Model\Model
- * @extends \Mantle\Database\Query\Builder<TModel>
- *
- * @method \Mantle\Database\Query\Term_Query_Builder whereId( int $id )
- * @method \Mantle\Database\Query\Term_Query_Builder whereName( string $name )
- * @method \Mantle\Database\Query\Term_Query_Builder whereSlug( string $slug )
- * @method \Mantle\Database\Query\Term_Query_Builder whereTaxonomy( string $taxonomy )
  */
 class Term_Query_Builder extends Builder {
 	use Queries_Relationships;
@@ -108,7 +100,7 @@ class Term_Query_Builder extends Builder {
 	/**
 	 * Execute the query.
 	 *
-	 * @return Collection<int, TModel>
+	 * @return Collection
 	 */
 	public function get(): Collection {
 		$term_ids = \get_terms( $this->get_query_args() );

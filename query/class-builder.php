@@ -499,7 +499,9 @@ abstract class Builder {
 	/**
 	 * Get the first result of the query.
 	 *
-	 * @return TModel|null
+	 * @return \Mantle\Database\Model\Model|null
+	 *
+	 * @phpstan-return TModel|null
 	 */
 	public function first(): ?Model {
 		return $this->take( 1 )->get()->first();
