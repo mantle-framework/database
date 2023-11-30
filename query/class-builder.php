@@ -3,7 +3,7 @@
  * Builder class file.
  *
  * phpcs:disable WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
- * phpcs:disable Squiz.Commenting.FunctionComment
+ * phpcs:disable Squiz.Commenting.VariableComment.Missing, Squiz.Commenting.FunctionComment
  * phpcs:disable PEAR.Functions.FunctionCallSignature.CloseBracketLine, PEAR.Functions.FunctionCallSignature.MultipleArguments, PEAR.Functions.FunctionCallSignature.ContentAfterOpenBracket
  *
  * @package Mantle
@@ -11,6 +11,7 @@
 
 namespace Mantle\Database\Query;
 
+use BackedEnum;
 use Closure;
 use Mantle\Container\Container;
 use Mantle\Contracts\Database\Scope;
@@ -26,8 +27,6 @@ use Mantle\Support\Collection;
 use Mantle\Support\Str;
 use Mantle\Support\Traits\Conditionable;
 
-use function Mantle\Support\Helpers\collect;
-
 /**
  * Builder Query Builder
  *
@@ -41,9 +40,9 @@ abstract class Builder {
 	/**
 	 * Model to build on.
 	 *
-	 * @var string[]|string
+	 * @var class-string<TModel>|array<class-string<TModel>>
 	 */
-	protected $model;
+	protected array|string $model;
 
 	/**
 	 * Result limit per-page.
@@ -132,9 +131,9 @@ abstract class Builder {
 	/**
 	 * Storage of the found rows for a query.
 	 *
-	 * @var int
+	 * @var int|null
 	 */
-	protected int $found_rows = 0;
+	protected ?int $found_rows = 0;
 
 	/**
 	 * Relationships to eager load.
@@ -350,12 +349,20 @@ abstract class Builder {
 	/**
 	 * Query by a meta field.
 	 *
-	 * @param string $key Meta key.
-	 * @param mixed  $value Meta value.
-	 * @param string $compare Comparison method, defaults to '='.
+	 * @param string|\BackedEnum $key Meta key.
+	 * @param mixed              $value Meta value.
+	 * @param string             $compare Comparison method, defaults to '='.
 	 * @return static
 	 */
 	public function whereMeta( $key, $value, string $compare = '=' ) {
+		if ( $key instanceof BackedEnum ) {
+			$key = $key->value;
+		}
+
+		if ( $value instanceof BackedEnum ) {
+			$value = $value->value;
+		}
+
 		$meta_query = [
 			'compare' => $compare,
 			'key'     => $key,
@@ -368,6 +375,7 @@ abstract class Builder {
 		}
 
 		$this->meta_query[] = $meta_query;
+
 		return $this;
 	}
 
@@ -381,6 +389,7 @@ abstract class Builder {
 	 */
 	public function andWhereMeta( ...$args ) {
 		$this->meta_query['relation'] = 'AND';
+
 		return $this->whereMeta( ...$args );
 	}
 
@@ -394,6 +403,7 @@ abstract class Builder {
 	 */
 	public function orWhereMeta( ...$args ) {
 		$this->meta_query['relation'] = 'OR';
+
 		return $this->whereMeta( ...$args );
 	}
 
@@ -914,16 +924,13 @@ abstract class Builder {
 	/**
 	 * Collect all the model object names in an associative Collection.
 	 *
-	 * @return Collection Collection with object names as keys and model
-	 *                    class names as values.
+	 * @return Collection<string, class-string<\Mantle\Database\Model\Model>> Collection of model class names keyed by object name.
 	 */
 	public function get_model_object_names(): Collection {
-		return collect( (array) $this->model )
+		return ( new Collection( (array) $this->model ) ) // @phpstan-ignore-line should return
 			->combine( $this->model )
 			->map(
-				function ( $model ) {
-					return $model::get_object_name();
-				}
+				fn ( $model ) => $model::get_object_name(),
 			)
 			->flip();
 	}
