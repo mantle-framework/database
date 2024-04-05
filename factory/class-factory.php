@@ -37,8 +37,6 @@ abstract class Factory {
 
 	/**
 	 * Flag to return the factory as a model.
-	 *
-	 * @var bool
 	 */
 	protected bool $as_models = false;
 
@@ -88,6 +86,17 @@ abstract class Factory {
 	 */
 	public function create( array $args = [] ): mixed {
 		return $this->make( $args )?->id();
+	}
+
+	/**
+	 * Creates an object and returns its ID.
+	 *
+	 * @deprecated Use create() or create_and_get() instead.
+	 *
+	 * @param array $args The arguments.
+	 */
+	public function create_object( $args ): int|null {
+		return $this->create( $args );
 	}
 
 	/**
@@ -243,8 +252,6 @@ abstract class Factory {
 
 	/**
 	 * Load the factory's definition and make a new instance of the factory.
-	 *
-	 * @return Closure
 	 */
 	public function apply_definition(): Closure {
 		return fn ( array $args, Closure $next ) => $next(
@@ -254,8 +261,6 @@ abstract class Factory {
 
 	/**
 	 * Create a new fluent factory instance.
-	 *
-	 * @return Fluent_Factory
 	 */
 	protected function create_fluent_factory(): Fluent_Factory {
 		return new Fluent_Factory(
@@ -269,7 +274,6 @@ abstract class Factory {
 	 *
 	 * @param string $method The method name.
 	 * @param array  $args   The arguments.
-	 * @return mixed
 	 */
 	public function __call( string $method, array $args ): mixed {
 		return $this->create_fluent_factory()->$method( ...$args );

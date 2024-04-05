@@ -27,8 +27,6 @@ use function Mantle\Support\Helpers\collect;
 class Fluent_Factory extends Factory {
 	/**
 	 * Number of objects to create.
-	 *
-	 * @var int
 	 */
 	protected int $count = 1;
 
@@ -49,7 +47,6 @@ class Fluent_Factory extends Factory {
 	 * Set the number of objects to create in the factory.
 	 *
 	 * @param int $count Count of objects to create.
-	 * @return static
 	 */
 	public function count( int $count ): static {
 		$this->count = $count;
@@ -91,8 +88,6 @@ class Fluent_Factory extends Factory {
 
 	/**
 	 * Method to proxy back to the definition method on the factory.
-	 *
-	 * @return array
 	 */
 	public function definition(): array {
 		return $this->factory->definition();
@@ -115,7 +110,6 @@ class Fluent_Factory extends Factory {
 	 *
 	 * @param string $method The method name.
 	 * @param array  $args   The arguments.
-	 * @return mixed
 	 *
 	 * @throws BadMethodCallException If the method does not exist.
 	 */
@@ -138,7 +132,6 @@ class Fluent_Factory extends Factory {
 	 * current fluent factory.
 	 *
 	 * @param Factory $factory The factory to convert.
-	 * @return self
 	 */
 	protected function make_fluent( Factory $factory ): self {
 		return $factory

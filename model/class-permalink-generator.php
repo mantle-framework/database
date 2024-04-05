@@ -17,21 +17,7 @@ use function Mantle\Support\Helpers\event;
  *
  * Generate a model's permalink using attributes and aliases from the model.
  */
-class Permalink_Generator {
-	/**
-	 * Model instance.
-	 *
-	 * @var Model|null
-	 */
-	protected ?Model $model;
-
-	/**
-	 * Route to generate for.
-	 *
-	 * @var string|null
-	 */
-	protected ?string $route;
-
+class Permalink_Generator implements \Stringable {
 	/**
 	 * Attributes for the generator.
 	 *
@@ -45,9 +31,7 @@ class Permalink_Generator {
 	 * @param string     $route Route to generate for.
 	 * @param Model|null $model Model to generator for, optional.
 	 */
-	public function __construct( string $route, Model $model = null ) {
-		$this->route = $route;
-		$this->model = $model;
+	public function __construct( protected ?string $route, protected ?Model $model = null ) {
 	}
 
 	/**
@@ -55,7 +39,6 @@ class Permalink_Generator {
 	 *
 	 * @param string     $route Route to generate for.
 	 * @param Model|null $model Model to generator for, optional.
-	 * @return Permalink_Generator
 	 */
 	public static function create( string $route, Model $model = null ): Permalink_Generator {
 		return new static( $route, $model );
@@ -63,8 +46,6 @@ class Permalink_Generator {
 
 	/**
 	 * Generate the permalink.
-	 *
-	 * @return string
 	 */
 	public function permalink(): string {
 		event( new Permalink_Generated( $this ) );
@@ -76,7 +57,7 @@ class Permalink_Generator {
 
 				return $this->get_attribute( $attribute );
 			},
-			$this->route
+			(string) $this->route
 		);
 
 		return home_url( $route );
@@ -84,8 +65,6 @@ class Permalink_Generator {
 
 	/**
 	 * Retrieve the model instance.
-	 *
-	 * @return Model|null
 	 */
 	public function get_model(): ?Model {
 		return $this->model;
@@ -93,8 +72,6 @@ class Permalink_Generator {
 
 	/**
 	 * Retrieve the generator route.
-	 *
-	 * @return string|null
 	 */
 	public function get_route(): ?string {
 		return $this->route;
@@ -102,8 +79,6 @@ class Permalink_Generator {
 
 	/**
 	 * Set the attributes for the generator.
-	 *
-	 * @return void
 	 */
 	protected function set_attributes(): void {
 		if ( $this->model ) {
@@ -117,7 +92,6 @@ class Permalink_Generator {
 	 * Get an attribute.
 	 *
 	 * @param string $attribute Attribute to get.
-	 * @return string
 	 */
 	public function get_attribute( string $attribute ): string {
 		$value = $this->attributes[ $attribute ] ?? $this->model->get( $attribute );
@@ -127,7 +101,7 @@ class Permalink_Generator {
 			$value = $this->model->slug();
 		}
 
-		if ( ! $value && $this->model ) {
+		if ( ! $value && $this->model instanceof \Mantle\Database\Model\Model ) {
 			$value = $this->model[ $attribute ] ?? null;
 		}
 
@@ -148,10 +122,8 @@ class Permalink_Generator {
 
 	/**
 	 * Convert the class to string.
-	 *
-	 * @return string
 	 */
-	public function __toString() {
+	public function __toString(): string {
 		return $this->permalink();
 	}
 }
