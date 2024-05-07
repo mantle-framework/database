@@ -73,6 +73,8 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 
 	/**
 	 * Taxonomy of the term.
+	 *
+	 * @return string
 	 */
 	public function taxonomy(): string {
 		return $this->get( 'taxonomy' );
@@ -103,16 +105,21 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 	 * Create a new model instance for a given taxonomy.
 	 *
 	 * @param string $taxonomy Taxonomy to create the model for.
+	 * @return self
 	 */
 	public static function for( string $taxonomy ): self {
 		$instance = new class() extends Term {
 			/**
 			 * Object name.
+			 *
+			 * @var string
 			 */
 			public static string $for_object_name = '';
 
 			/**
 			 * Retrieve the object name.
+			 *
+			 * @return string|null
 			 */
 			public static function get_object_name(): ?string {
 				return static::$for_object_name;
@@ -126,6 +133,8 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 
 	/**
 	 * Query builder class to use.
+	 *
+	 * @return string|null
 	 */
 	public static function get_query_builder_class(): ?string {
 		return Term_Query_Builder::class;
@@ -142,6 +151,8 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 
 	/**
 	 * Get the meta type for the object.
+	 *
+	 * @return string
 	 */
 	public function get_meta_type(): string {
 		return 'term';
@@ -149,6 +160,8 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 
 	/**
 	 * Getter for Object ID.
+	 *
+	 * @return int
 	 */
 	public function id(): int {
 		return (int) $this->get( 'id' );
@@ -156,6 +169,8 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 
 	/**
 	 * Getter for Object Name.
+	 *
+	 * @return string
 	 */
 	public function name(): string {
 		return (string) $this->get( 'name' );
@@ -163,6 +178,8 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 
 	/**
 	 * Getter for Object Slug.
+	 *
+	 * @return string
 	 */
 	public function slug(): string {
 		return (string) $this->get( 'slug' );
@@ -170,6 +187,8 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 
 	/**
 	 * Getter for Parent Object (if any)
+	 *
+	 * @return Core_Object|null
 	 */
 	public function parent(): ?Core_Object {
 		$parent = $this->get( 'parent' );
@@ -183,6 +202,8 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 
 	/**
 	 * Getter for Object Description
+	 *
+	 * @return string
 	 */
 	public function description(): string {
 		return (string) $this->get( 'description' );
@@ -190,6 +211,8 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 
 	/**
 	 * Getter for the Object Permalink
+	 *
+	 * @return string|null
 	 */
 	public function permalink(): ?string {
 		$term_link = \get_term_link( $this->id() );
@@ -198,6 +221,8 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 
 	/**
 	 * Retrieve the core object for the underlying object.
+	 *
+	 * @return \WP_Term|null
 	 */
 	public function core_object(): ?\WP_Term {
 		$id = $this->id();
@@ -215,7 +240,7 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 	 * @param array $attributes Attributes to save.
 	 * @throws Model_Exception Thrown on error saving.
 	 */
-	public function save( array $attributes = [] ): bool {
+	public function save( array $attributes = [] ) {
 		$this->set_attributes( $attributes );
 
 		$id = $this->id();
@@ -250,7 +275,7 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 	 *
 	 * @param bool $force Force delete the mode, not used.
 	 */
-	public function delete( bool $force = false ): void {
+	public function delete( bool $force = false ) {
 		\wp_delete_term( $this->id(), $this->taxonomy() );
 	}
 
@@ -259,6 +284,8 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 	 * the object's archive route with the object's slug.
 	 *
 	 *     /object_name/object_slug/
+	 *
+	 * @return string|null
 	 */
 	public static function get_route(): ?string {
 		$route_structure = static::get_archive_route() . '/{' . static::get_object_name() . '}/';
@@ -274,7 +301,7 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 			'mantle_entity_router_term_route',
 			$route_structure,
 			static::get_object_name(),
-			static::class
+			get_called_class()
 		);
 	}
 }

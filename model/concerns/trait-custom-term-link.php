@@ -18,9 +18,9 @@ trait Custom_Term_Link {
 	/**
 	 * Boot the trait and add filters for the post type link single and archive link.
 	 */
-	public static function boot_custom_term_link(): void {
+	public static function boot_custom_term_link() {
 		if ( static::get_route() ) {
-			add_filter( 'term_link', [ self::class, 'filter_term_link' ], 99 );
+			add_filter( 'term_link', [ __CLASS__, 'filter_term_link' ], 99 );
 		}
 	}
 
@@ -30,6 +30,7 @@ trait Custom_Term_Link {
 	 * @param string   $term_link Term link to filter.
 	 * @param \WP_Term $term Term object.
 	 * @param string   $taxonomy Taxonomy name.
+	 * @return string
 	 */
 	public static function filter_term_link( string $term_link, \WP_Term $term, string $taxonomy ): string {
 		if ( static::get_object_name() !== $taxonomy ) {

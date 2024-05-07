@@ -12,7 +12,7 @@ namespace Mantle\Database\Query;
 use Mantle\Database\Model\Term;
 use Mantle\Database\Query\Concerns\Queries_Dates;
 use Mantle\Support\Helpers;
-use RuntimeException;
+use Mantle\Support\Collection;
 use WP_Term;
 
 use function Mantle\Support\Helpers\collect;
@@ -27,7 +27,7 @@ use function Mantle\Support\Helpers\collect;
  * @method \Mantle\Database\Query\Post_Query_Builder<TModel> whereId( int $id )
  * @method \Mantle\Database\Query\Post_Query_Builder<TModel> whereName( string $name )
  * @method \Mantle\Database\Query\Post_Query_Builder<TModel> whereSlug( string $slug )
- * @method \Mantle\Database\Query\Post_Query_Builder<TModel> whereStatus( string[]|string $status )
+ * @method \Mantle\Database\Query\Post_Query_Builder<TModel> whereStatus( string $status )
  * @method \Mantle\Database\Query\Post_Query_Builder<TModel> whereTitle( string $title )
  * @method \Mantle\Database\Query\Post_Query_Builder<TModel> whereType( string $type )
  */
@@ -36,6 +36,8 @@ class Post_Query_Builder extends Builder {
 
 	/**
 	 * Query Variable Aliases
+	 *
+	 * @var array
 	 */
 	protected array $query_aliases = [
 		'date_gmt'     => 'post_date_gmt',
@@ -48,11 +50,12 @@ class Post_Query_Builder extends Builder {
 		'post_author'  => 'author',
 		'post_name'    => 'name',
 		'slug'         => 'name',
-		'status'       => 'post_status',
 	];
 
 	/**
 	 * Query Where In Aliases
+	 *
+	 * @var array
 	 */
 	protected array $query_where_in_aliases = [
 		'author'      => 'author__in',
@@ -65,6 +68,8 @@ class Post_Query_Builder extends Builder {
 
 	/**
 	 * Query Where Not In Aliases
+	 *
+	 * @var array
 	 */
 	protected array $query_where_not_in_aliases = [
 		'author'      => 'author__not_in',
@@ -77,6 +82,8 @@ class Post_Query_Builder extends Builder {
 
 	/**
 	 * Query order by aliases.
+	 *
+	 * @var array
 	 */
 	protected array $query_order_by_aliases = [
 		'id' => 'ID',
@@ -84,11 +91,15 @@ class Post_Query_Builder extends Builder {
 
 	/**
 	 * Tax Query.
+	 *
+	 * @var array
 	 */
 	protected array $tax_query = [];
 
 	/**
 	 * Get the query arguments.
+	 *
+	 * @return array
 	 */
 	public function get_query_args(): array {
 		$this->apply_scopes();
@@ -107,6 +118,7 @@ class Post_Query_Builder extends Builder {
 
 		return array_merge(
 			[
+				'fields'              => 'ids',
 				'ignore_sticky_posts' => true,
 				'meta_query'          => $this->meta_query, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 				'order'               => $order,
@@ -119,9 +131,6 @@ class Post_Query_Builder extends Builder {
 			],
 			$this->get_date_query_args(),
 			$this->wheres,
-			[
-				'fields' => 'ids',
-			]
 		);
 	}
 
@@ -140,21 +149,14 @@ class Post_Query_Builder extends Builder {
 			fn () => $query->query( $this->get_query_args() ),
 		);
 
-		if ( empty( $query->found_posts ) && count( $query->posts ) > 0 ) {
-			$this->found_rows = null;
-		} else {
-			$this->found_rows = $query->found_posts;
-		}
-
-		$post_ids = $query->posts;
+		$this->found_rows = $query->found_posts;
+		$post_ids         = $query->posts;
 
 		if ( empty( $post_ids ) ) {
-			return ( new Collection() )->with_found_rows( $this->found_rows ); // @phpstan-ignore-line should return
+			return collect();
 		}
 
-		$models = $this
-			->get_models( $post_ids )
-			->with_found_rows( $this->found_rows );
+		$models = $this->get_models( $post_ids );
 
 		// Return the models if there are no models or if multiple model instances
 		// are used. Eager loading does not currently support multiple models.
@@ -167,6 +169,8 @@ class Post_Query_Builder extends Builder {
 
 	/**
 	 * Get the count of the query results.
+	 *
+	 * @return int
 	 */
 	public function count(): int {
 		$this->take( -1 );
@@ -192,17 +196,10 @@ class Post_Query_Builder extends Builder {
 	protected function get_models( array $post_ids ): Collection {
 		if ( is_array( $this->model ) ) {
 			$model_object_types = $this->get_model_object_names();
-
-			return Collection::from( $post_ids )
+			return collect( $post_ids )
 				->map(
 					function ( $post_id ) use ( $model_object_types ) {
 						$post_type = \get_post_type( $post_id );
-
-						if ( empty( $model_object_types[ $post_type ] ) ) {
-							throw new RuntimeException(
-								"Missing model for object type [{ $post_type }]."
-							);
-						}
 
 						if ( empty( $post_type ) ) {
 							return null;
@@ -211,13 +208,12 @@ class Post_Query_Builder extends Builder {
 						return $model_object_types[ $post_type ]::find( $post_id );
 					}
 				)
-				->filter()
-				->values();
+				->filter();
+		} else {
+			return collect( $post_ids )
+				->map( [ $this->model, 'find' ] )
+				->filter();
 		}
-
-		return Collection::from( $post_ids )
-			->map( [ $this->model, 'find' ] )
-			->filter();
 	}
 
 	/**
@@ -301,20 +297,10 @@ class Post_Query_Builder extends Builder {
 	}
 
 	/**
-	 * Fetch the query with 'no_found_rows' set to a value.
-	 *
-	 * Setting to 'true' prevents counting all the available rows for a query.
-	 *
-	 * @param bool $value Whether to set 'no_found_rows' to true.
-	 */
-	public function withNoFoundRows( bool $value = true ): static {
-		return $this->where( 'no_found_rows', $value );
-	}
-
-	/**
 	 * Dump the SQL query being executed.
 	 *
 	 * @param bool $die Whether to die after dumping the SQL.
+	 * @return static
 	 */
 	public function dumpSql( bool $die = false ): static {
 		add_filter(
@@ -339,6 +325,8 @@ class Post_Query_Builder extends Builder {
 
 	/**
 	 * Dump the SQL query being executed and die.
+	 *
+	 * @return void
 	 */
 	public function ddSql(): void {
 		$this->dumpSql( true );

@@ -19,8 +19,8 @@ trait Register_Post_Type {
 	/**
 	 * Register the post type.
 	 */
-	public static function boot_register_post_type(): void {
-		\add_action( 'init', [ self::class, 'register_object' ] );
+	public static function boot_register_post_type() {
+		\add_action( 'init', [ __CLASS__, 'register_object' ] );
 	}
 
 	/**
@@ -28,7 +28,7 @@ trait Register_Post_Type {
 	 *
 	 * @throws Model_Exception Thrown when registering a post type that is already registered.
 	 */
-	public static function register_object(): void {
+	public static function register_object() {
 		$post_type = static::get_object_name();
 
 		if ( \post_type_exists( $post_type ) ) {

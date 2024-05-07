@@ -64,7 +64,7 @@ trait Has_Events {
 	 * @param  \Closure|string $callback
 	 * @throws \RuntimeException Thrown on use.
 	 */
-	public static function creating( $callback ): never {
+	public static function creating( $callback ) {
 		throw new \RuntimeException( 'Listening to the "creating" event on a model is not supported at this time.' );
 	}
 
@@ -73,7 +73,7 @@ trait Has_Events {
 	 *
 	 * @param  \Closure|string $callback
 	 */
-	public static function created( $callback ): void {
+	public static function created( $callback ) {
 		static::register_model_event( 'created', $callback );
 	}
 
@@ -82,7 +82,7 @@ trait Has_Events {
 	 *
 	 * @param  \Closure|string $callback
 	 */
-	public static function updating( $callback ): void {
+	public static function updating( $callback ) {
 		static::register_model_event( 'updating', $callback );
 	}
 
@@ -91,7 +91,7 @@ trait Has_Events {
 	 *
 	 * @param  \Closure|string $callback
 	 */
-	public static function updated( $callback ): void {
+	public static function updated( $callback ) {
 		static::register_model_event( 'updated', $callback );
 	}
 
@@ -100,7 +100,7 @@ trait Has_Events {
 	 *
 	 * @param  \Closure|string $callback
 	 */
-	public static function trashing( $callback ): void {
+	public static function trashing( $callback ) {
 		static::register_model_event( 'trashing', $callback );
 	}
 
@@ -109,7 +109,7 @@ trait Has_Events {
 	 *
 	 * @param  \Closure|string $callback
 	 */
-	public static function trashed( $callback ): void {
+	public static function trashed( $callback ) {
 		static::register_model_event( 'trashed', $callback );
 	}
 
@@ -118,7 +118,7 @@ trait Has_Events {
 	 *
 	 * @param  \Closure|string $callback
 	 */
-	public static function deleting( $callback ): void {
+	public static function deleting( $callback ) {
 		static::register_model_event( 'deleting', $callback );
 	}
 
@@ -127,12 +127,14 @@ trait Has_Events {
 	 *
 	 * @param  \Closure|string $callback
 	 */
-	public static function deleted( $callback ): void {
+	public static function deleted( $callback ) {
 		static::register_model_event( 'deleted', $callback );
 	}
 
 	/**
 	 * Get the event dispatcher instance.
+	 *
+	 * @return Dispatcher
 	 */
 	public static function get_event_dispatcher(): Dispatcher {
 		return static::$dispatcher;
@@ -142,15 +144,18 @@ trait Has_Events {
 	 * Set the event dispatcher instance.
 	 *
 	 * @param Dispatcher $dispatcher Dispatcher instance.
+	 * @return void
 	 */
-	public static function set_event_dispatcher( Dispatcher $dispatcher ): void {
+	public static function set_event_dispatcher( Dispatcher $dispatcher ) {
 		static::$dispatcher = $dispatcher;
 	}
 
 	/**
 	 * Unset the event dispatcher for models.
+	 *
+	 * @return void
 	 */
-	public static function unset_event_dispatcher(): void {
+	public static function unset_event_dispatcher() {
 		static::$dispatcher = null;
 	}
 
@@ -174,8 +179,10 @@ trait Has_Events {
 
 	/**
 	 * Remove all of the event listeners for the model.
+	 *
+	 * @return void
 	 */
-	public static function flush_event_listeners(): void {
+	public static function flush_event_listeners() {
 		if ( ! isset( static::$dispatcher ) ) {
 			return;
 		}

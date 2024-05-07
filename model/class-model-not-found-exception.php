@@ -51,6 +51,8 @@ class Model_Not_Found_Exception extends Model_Exception {
 
 	/**
 	 * Get the affected Eloquent model.
+	 *
+	 * @return string
 	 */
 	public function get_model(): string {
 		return $this->model;

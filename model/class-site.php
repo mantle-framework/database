@@ -58,6 +58,8 @@ class Site extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Object ID.
+	 *
+	 * @return int
 	 */
 	public function id(): int {
 		return (int) $this->get( 'id' );
@@ -65,6 +67,8 @@ class Site extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Object Name.
+	 *
+	 * @return string
 	 */
 	public function name(): string {
 		return (string) \get_blog_option( $this->id(), 'blogname' );
@@ -72,6 +76,8 @@ class Site extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Object Slug.
+	 *
+	 * @return string
 	 */
 	public function slug(): string {
 		return (string) $this->get( 'slug' );
@@ -79,6 +85,8 @@ class Site extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Parent Object (if any)
+	 *
+	 * @return Contracts\Database\Core_Object|null
 	 */
 	public function parent(): ?Contracts\Database\Core_Object {
 		return null;
@@ -86,6 +94,8 @@ class Site extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Object Description
+	 *
+	 * @return string
 	 */
 	public function description(): string {
 		return (string) $this->get( 'description' );
@@ -93,6 +103,8 @@ class Site extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for the Object Permalink
+	 *
+	 * @return string|null
 	 */
 	public function permalink(): ?string {
 		return (string) \get_home_url( $this->id() );
@@ -100,6 +112,8 @@ class Site extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Retrieve the core object for the underlying object.
+	 *
+	 * @return \WP_Site|null
 	 */
 	public function core_object(): ?\WP_Site {
 		$id = $this->id();
@@ -115,10 +129,11 @@ class Site extends Model implements Contracts\Database\Core_Object, Contracts\Da
 	 * Save the model.
 	 *
 	 * @param array $attributes Attributes to save.
+	 * @return bool
 	 *
 	 * @throws Model_Exception Thrown on error saving.
 	 */
-	public function save( array $attributes = [] ): bool {
+	public function save( array $attributes = [] ) {
 		$this->set_attributes( $attributes );
 
 		$id = $this->id();

@@ -154,7 +154,7 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 			return $this;
 		}
 
-		$this->path = static::strip_page_from_path( static::request()->path() );
+		$this->path = static::strip_page_from_path( $this->request()->path() );
 
 		// Ensure the path starts with a /.
 		if ( $this->path && '/' !== $this->path[0] ) {
@@ -166,6 +166,8 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 
 	/**
 	 * Retrieve the path to use for the paginator.
+	 *
+	 * @return string
 	 */
 	public function get_path(): string {
 		return $this->path;
@@ -210,6 +212,8 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 
 	/**
 	 * Retrieve the current page.
+	 *
+	 * @return int
 	 */
 	public function current_page(): int {
 		return $this->current_page;
@@ -217,6 +221,8 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 
 	/**
 	 * Determine if this is the first page.
+	 *
+	 * @return bool
 	 */
 	public function on_first_page(): bool {
 		return 1 === $this->current_page();
@@ -234,6 +240,8 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 
 	/**
 	 * Retrieve the items for the paginator.
+	 *
+	 * @return Collection
 	 */
 	public function items(): Collection {
 		return $this->items;
@@ -243,6 +251,7 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 	 * Determine if there are more items in the data source.
 	 *
 	 * @param bool $has_more Flag if there should be more pages.
+	 * @return bool
 	 */
 	public function has_more( bool $has_more = null ): bool {
 		if ( null !== $has_more ) {
@@ -254,16 +263,17 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 
 	/**
 	 * Determine if there are enough items to split into multiple pages.
+	 *
+	 * @return bool
 	 */
 	public function has_pages(): bool {
-		if ( 1 !== $this->current_page() ) {
-						return true;
-		}
-								return $this->has_more();
+		return 1 !== $this->current_page() || $this->has_more();
 	}
 
 	/**
 	 * Count the number of items.
+	 *
+	 * @return int
 	 */
 	public function count(): int {
 		return $this->items->count();
@@ -295,12 +305,14 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 	 * @return static
 	 */
 	public function with_query_string() {
-		$this->append( static::request()->query() );
+		$this->append( $this->request()->query() );
 		return $this;
 	}
 
 	/**
 	 * Retrieve the query strings for the paginator.
+	 *
+	 * @return array
 	 */
 	public function query(): array {
 		return $this->query;
@@ -308,6 +320,8 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 
 	/**
 	 * Get the current request object.
+	 *
+	 * @return Request
 	 */
 	protected static function request(): Request {
 		return app( Request::class );
@@ -315,6 +329,8 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 
 	/**
 	 * Resolve the current page.
+	 *
+	 * @return int
 	 */
 	protected static function resolve_current_page(): int {
 		if ( static::$current_page_resolver ) {
@@ -340,6 +356,7 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 	 * Find the current page from the path.
 	 *
 	 * @param string $path URL path.
+	 * @return int|null
 	 */
 	protected static function get_page_from_path( string $path ): ?int {
 		if ( ! Str::is( 'page/*', $path ) ) {
@@ -353,6 +370,7 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 	 * Find the current page from the path.
 	 *
 	 * @param string $path URL path.
+	 * @return string
 	 */
 	protected static function strip_page_from_path( string $path ): string {
 		if ( ! Str::is( 'page/*', $path ) ) {
@@ -361,7 +379,7 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 		preg_match_all( '/page\/(\d*)\/?/', $path, $matches );
 
 		if ( ! empty( $matches[0][0] ) ) {
-			return str_replace( $matches[0][0], '', $path );
+			$path = str_replace( $matches[0][0], '', $path );
 		}
 
 		return $path;
@@ -371,6 +389,7 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 	 * Set the current page resolver.
 	 *
 	 * @param callable $callback Callback for the resolver.
+	 * @return void
 	 */
 	public static function current_page_resolver( callable $callback ): void {
 		static::$current_page_resolver = $callback;
@@ -380,6 +399,7 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 	 * Set the current path resolver.
 	 *
 	 * @param callable $callback Callback for the resolver.
+	 * @return void
 	 */
 	public static function current_path_resolver( callable $callback ): void {
 		static::$current_path_resolver = $callback;
@@ -389,6 +409,7 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 	 * Generate a URL for a given page.
 	 *
 	 * @param int $page Page number.
+	 * @return string
 	 */
 	public function url( int $page ): string {
 		if ( isset( static::$url_generator ) ) {
@@ -417,6 +438,8 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 
 	/**
 	 * Retrieve the URL for the next page.
+	 *
+	 * @return string|null
 	 */
 	public function next_url(): ?string {
 		if ( $this->has_more() ) {
@@ -428,6 +451,8 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 
 	/**
 	 * Retrieve the URL for the previous page.
+	 *
+	 * @return string|null
 	 */
 	public function previous_url(): ?string {
 		if ( $this->current_page() > 1 ) {
@@ -439,6 +464,8 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 
 	/**
 	 * Convert the paginator to an array.
+	 *
+	 * @return array
 	 */
 	public function to_array(): array {
 		return [
@@ -474,6 +501,7 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 	 * Check if an item exists at an offset.
 	 *
 	 * @param mixed $offset Array offset.
+	 * @return bool
 	 */
 	public function offsetExists( mixed $offset ): bool {
 		return isset( $this->items[ $offset ] );
@@ -483,6 +511,7 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 	 * Retrieve an item by its offset.
 	 *
 	 * @param mixed $offset Offset to get.
+	 * @return mixed
 	 */
 	public function offsetGet( mixed $offset ): mixed {
 		return $this->items[ $offset ];
@@ -493,6 +522,7 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 	 *
 	 * @param mixed $offset Offset to get.
 	 * @param mixed $value  Value to set.
+	 * @return void
 	 */
 	public function offsetSet( mixed $offset, mixed $value ): void {
 		$this->items[ $offset ] = $value;
@@ -502,6 +532,7 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 	 * Delete by an offset.
 	 *
 	 * @param mixed $offset Offset to delete.
+	 * @return void
 	 */
 	public function offsetUnset( $offset ): void {
 		unset( $this->items[ $offset ] );
@@ -524,6 +555,7 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 	 *
 	 * @param string $view View name to load, optional.
 	 * @param array  $data View data.
+	 * @return View|null
 	 */
 	public function render( string $view = null, array $data = [] ): ?View {
 		try {
@@ -547,6 +579,7 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 	 *
 	 * @param string $view View name to load, optional.
 	 * @param array  $data View data.
+	 * @return string
 	 */
 	public function links( string $view = null, array $data = [] ): string {
 		return (string) $this->render( $view, $data );
@@ -557,6 +590,7 @@ class Paginator implements Arrayable, ArrayAccess, Countable, Jsonable, JsonSeri
 	 *
 	 * @param string $view View name to load, optional.
 	 * @param array  $data View data.
+	 * @return string
 	 */
 	public function to_html( string $view = null, array $data = [] ): string {
 		return (string) $this->render( $view, $data );

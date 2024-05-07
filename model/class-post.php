@@ -9,7 +9,6 @@ namespace Mantle\Database\Model;
 
 use Carbon\Carbon;
 use DateTime;
-use DateTimeInterface;
 use Mantle\Contracts;
 use Mantle\Database\Query\Builder;
 use Mantle\Database\Query\Post_Query_Builder;
@@ -45,9 +44,6 @@ use Mantle\Support\Helpers;
  * @property string $to_ping
  * @property string $content Alias to post_content.
  * @property string $date Alias to post_date.
- * @property string $date_gmt Alias to post_date_gmt.
- * @property string $modified Alias to post_modified.
- * @property string $modified_gmt Alias to post_modified_gmt.
  * @property string $description Alias to post_excerpt.
  * @property string $id Alias to ID.
  * @property string $name Alias to post_title.
@@ -69,7 +65,7 @@ use Mantle\Support\Helpers;
  * @method static \Mantle\Database\Query\Post_Query_Builder<static> whereTerm( array|\WP_Term|\Mantle\Database\Model\Term|int $term, ?string $taxonomy = null, string $operator = 'IN', string $field = 'term_id' )
  * @method static \Mantle\Database\Query\Post_Query_Builder<static> andWhereTerm( array|\WP_Term|\Mantle\Database\Model\Term|int $term, ?string $taxonomy = null, string $operator = 'IN', string $field = 'term_id' )
  * @method static \Mantle\Database\Query\Post_Query_Builder<static> orWhereTerm( array|\WP_Term|\Mantle\Database\Model\Term|int $term, ?string $taxonomy = null, string $operator = 'IN', string $field = 'term_id' )
- * @method static \Mantle\Database\Query\Post_Query_Builder<static> whereMeta( string|\BackedEnum $key, mixed $value, string $operator = '=' )
+ * @method static \Mantle\Database\Query\Post_Query_Builder<static> whereMeta( string $key, mixed $value, string $operator = '=' )
  * @method static \Mantle\Database\Query\Post_Query_Builder<static> whereRaw( array|string $column, ?string $operator = null, mixed $value = null, string $boolean = 'AND' )
  * @method static \Mantle\Database\Query\Post_Query_Builder<static> where_raw( array|string $column, ?string $operator = null, mixed $value = null, string $boolean = 'AND' )
  * @method static \Mantle\Database\Query\Post_Query_Builder<static> orWhereRaw( array|string $column, ?string $operator = null, mixed $value = null, string $boolean = 'AND' )
@@ -88,8 +84,7 @@ use Mantle\Support\Helpers;
  * @method static \Mantle\Database\Query\Post_Query_Builder<static> newer_than_or_equal_to( DateTimeInterface|int $date, string $column = 'post_date' )
  */
 class Post extends Model implements Contracts\Database\Core_Object, Contracts\Database\Model_Meta, Contracts\Database\Updatable {
-	use Dates\Has_Dates,
-		Events\Post_Events,
+	use Events\Post_Events,
 		Meta\Model_Meta,
 		Meta\Post_Meta,
 		Term\Model_Term;
@@ -100,17 +95,14 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 	 * @var array<string, string>
 	 */
 	protected static $aliases = [
-		'content'      => 'post_content',
-		'date'         => 'post_date',
-		'date_gmt'     => 'post_date_gmt',
-		'modified'     => 'post_modified',
-		'modified_gmt' => 'post_modified_gmt',
-		'description'  => 'post_excerpt',
-		'id'           => 'ID',
-		'title'        => 'post_title',
-		'name'         => 'post_title',
-		'slug'         => 'post_name',
-		'status'       => 'post_status',
+		'content'     => 'post_content',
+		'date'        => 'post_date',
+		'description' => 'post_excerpt',
+		'id'          => 'ID',
+		'title'       => 'post_title',
+		'name'        => 'post_title',
+		'slug'        => 'post_name',
+		'status'      => 'post_status',
 	];
 
 	/**
@@ -178,16 +170,21 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 	 * Create a new model instance for a given post type.
 	 *
 	 * @param string $post_type Post type to create the model for.
+	 * @return self
 	 */
 	public static function for( string $post_type ): self {
 		$instance = new class() extends Post {
 			/**
 			 * Post type for the model.
+			 *
+			 * @var string
 			 */
 			public static string $for_object_name = '';
 
 			/**
 			 * Retrieve the object name.
+			 *
+			 * @return string|null
 			 */
 			public static function get_object_name(): ?string {
 				return static::$for_object_name;
@@ -201,6 +198,8 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Query builder class to use.
+	 *
+	 * @return string|null
 	 */
 	public static function get_query_builder_class(): ?string {
 		return Post_Query_Builder::class;
@@ -217,6 +216,8 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Object ID.
+	 *
+	 * @return int
 	 */
 	public function id(): int {
 		return (int) $this->get( 'id' );
@@ -224,6 +225,8 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Object Name.
+	 *
+	 * @return string
 	 */
 	public function name(): string {
 		return (string) $this->get( 'name' );
@@ -231,6 +234,8 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Object Slug.
+	 *
+	 * @return string
 	 */
 	public function slug(): string {
 		return (string) $this->get( 'slug' );
@@ -238,6 +243,8 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Parent Object (if any)
+	 *
+	 * @return Contracts\Database\Core_Object|null
 	 */
 	public function parent(): ?Contracts\Database\Core_Object {
 		if ( ! empty( $this->attributes['post_parent'] ) ) {
@@ -249,6 +256,8 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Object Description
+	 *
+	 * @return string
 	 */
 	public function description(): string {
 		return (string) $this->get( 'description' );
@@ -265,6 +274,8 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for the Object Permalink
+	 *
+	 * @return string|null
 	 */
 	public function permalink(): ?string {
 		return (string) \get_permalink( $this->id() );
@@ -272,6 +283,8 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Retrieve the core object for the underlying object.
+	 *
+	 * @return \WP_Post|null
 	 */
 	public function core_object(): ?\WP_Post {
 		$id = $this->id();
@@ -294,6 +307,7 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 	 * Schedule a post for publication.
 	 *
 	 * @param string|DateTime $date Date to schedule the post for.
+	 * @return bool
 	 */
 	public function schedule( $date ) : bool {
 		if ( $date instanceof DateTime ) {
@@ -313,26 +327,18 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 	/**
 	 * Save the model.
 	 *
-	 * @param array<string, mixed> $attributes Attributes to save.
+	 * @param array $attributes Attributes to save.
+	 * @return bool
 	 *
 	 * @throws Model_Exception Thrown on error saving.
 	 */
-	public function save( array $attributes = [] ): bool {
+	public function save( array $attributes = [] ) {
 		$this->set_attributes( $attributes );
 
 		$id = $this->id();
 
-		// Update the post modified date if it has been modified.
-		if ( $this->is_attribute_modified( 'post_modified' ) || $this->is_attribute_modified( 'post_modified_gmt' ) ) {
-			add_filter( 'wp_insert_post_data', [ $this, 'set_post_modified_date_on_save' ] );
-		}
-
 		if ( empty( $id ) ) {
 			$save = \wp_insert_post( $this->get_attributes(), true );
-
-			if ( \is_wp_error( $save ) ) {
-				throw new Model_Exception( 'Error saving model: ' . $save->get_error_message() );
-			}
 		} else {
 			$save = \wp_update_post(
 				array_merge(
@@ -364,7 +370,7 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 	 * Delete the model.
 	 *
 	 * @param bool $force Force delete the mode.
-	 * @return \WP_Post|false|mixed
+	 * @return mixed
 	 */
 	public function delete( bool $force = false ) {
 		return \wp_delete_post( $this->id(), $force );
@@ -377,6 +383,7 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 	 * use the 'any' post_status attribute.
 	 *
 	 * @param Builder $builder Query builder instance.
+	 * @return Builder
 	 */
 	public function scopeAnyStatus( Builder $builder ): Builder {
 		return $builder->where(
@@ -387,6 +394,8 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Get the registerable route for the model.
+	 *
+	 * @return string|null
 	 */
 	public static function get_route(): ?string {
 		if ( 'post' === static::get_object_name() ) {
@@ -399,10 +408,10 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 					function () use ( &$index ) {
 						return ( $index++ ) % 2 ? '{' : '}';
 					},
-					(string) $structure
+					$structure
 				);
 
-				$route_structure = str_replace( '{postname}', '{post}', (string) $structure );
+				$route_structure = str_replace( '{postname}', '{post}', $structure );
 			} else {
 				$route_structure = null;
 			}
@@ -421,35 +430,7 @@ class Post extends Model implements Contracts\Database\Core_Object, Contracts\Da
 			'mantle_entity_router_post_route',
 			$route_structure,
 			static::get_object_name(),
-			static::class
+			get_called_class()
 		);
-	}
-
-	/**
-	 * Set the post's modified date on save via the 'wp_insert_post_data' filter.
-	 *
-	 * @param array<string, mixed> $data Data to save.
-	 */
-	public function set_post_modified_date_on_save( array $data ) {
-		// Only update the post modified date if the post ID matches the current model.
-		if ( isset( $data['ID'] ) && $this->id() !== (int) $data['ID'] ) {
-			return $data;
-		}
-
-		if ( $this->is_attribute_modified( 'post_modified' ) ) {
-			$date = Carbon::parse( $this->get_attribute( 'post_modified' ), wp_timezone() );
-		} elseif ( $this->is_attribute_modified( 'post_modified_gmt' ) ) {
-			$date = Carbon::parse( $this->get_attribute( 'post_modified_gmt' ), new \DateTimeZone( 'UTC' ) );
-		} else {
-			return $data;
-		}
-
-		$data['post_modified']     = $date->setTimezone( wp_timezone() )->format( 'Y-m-d H:i:s' );
-		$data['post_modified_gmt'] = $date->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
-
-		// Unhook the filter after it has been used.
-		remove_filter( 'wp_insert_post_data', [ $this, 'set_post_modified_date_on_save' ] );
-
-		return $data;
 	}
 }
