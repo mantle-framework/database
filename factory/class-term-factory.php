@@ -12,7 +12,6 @@ use Faker\Generator;
 use Mantle\Database\Model\Term;
 
 use function Mantle\Support\Helpers\get_term_object;
-use function Mantle\Support\Helpers\tap;
 
 /**
  * Term Factory
@@ -51,7 +50,7 @@ class Term_Factory extends Factory {
 	public function definition(): array {
 		return [
 			'description' => trim( $this->faker->paragraph( 2 ) ),
-			'name'        => $this->faker->words( wp_rand( 2, 4 ), true ),
+			'name'        => $this->faker->sentence(),
 			'taxonomy'    => $this->taxonomy,
 		];
 	}
@@ -105,6 +104,7 @@ class Term_Factory extends Factory {
 	 * Create a new factory instance to create posts for a specific taxonomy.
 	 *
 	 * @param string $taxonomy Post type to use.
+	 * @return static
 	 */
 	public function with_taxonomy( string $taxonomy ): static {
 		return tap(
@@ -117,6 +117,7 @@ class Term_Factory extends Factory {
 	 * Alias for {@see Term_Factory::with_taxonomy()}.
 	 *
 	 * @param string $taxonomy Taxonomy to use.
+	 * @return static
 	 */
 	public function for( string $taxonomy ): static {
 		return $this->with_taxonomy( $taxonomy );

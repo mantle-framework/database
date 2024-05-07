@@ -31,12 +31,13 @@ class Belongs_To_Many extends Belongs_To {
 	 *
 	 * @param Collection $models Parent models.
 	 * @param Collection $results Eagerly loaded results to match.
+	 * @return Collection
 	 */
 	public function match( Collection $models, Collection $results ): Collection {
 		$dictionary = $this->build_dictionary( $results, $models );
 
 		return $models->each(
-			function( $model ) use ( $dictionary ): void {
+			function( $model ) use ( $dictionary ) {
 				$key = $model->{$this->foreign_key};
 
 				$model->set_relation( $this->relationship, $dictionary[ $key ] ?? null );
@@ -49,6 +50,7 @@ class Belongs_To_Many extends Belongs_To {
 	 *
 	 * @param Collection $results Collection of results.
 	 * @param Collection $models Eagerly loaded results to match.
+	 * @return array
 	 */
 	protected function build_dictionary( Collection $results, Collection $models ): array {
 		$results    = $results->key_by( $this->foreign_key );
@@ -60,7 +62,9 @@ class Belongs_To_Many extends Belongs_To {
 
 		return $dictionary
 			->map(
-				fn ( $child_ids) => $results->only( $child_ids )->values()->all()
+				function ( $child_ids ) use ( $results ) {
+					return $results->only( $child_ids )->values()->all();
+				}
 			)
 			->filter()
 			->all();

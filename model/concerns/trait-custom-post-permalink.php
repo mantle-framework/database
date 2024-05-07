@@ -25,17 +25,17 @@ trait Custom_Post_Permalink {
 	/**
 	 * Boot the trait and add filters for the post type link single and archive link.
 	 */
-	public static function boot_custom_post_permalink(): void {
+	public static function boot_custom_post_permalink() {
 		if ( static::get_route() ) {
 			if ( 'post' === static::get_object_name() ) {
-				add_filter( 'post_link', [ self::class, 'filter_post_type_link' ] );
+				add_filter( 'post_link', [ __CLASS__, 'filter_post_type_link' ] );
 			} else {
-				add_filter( 'post_type_link', [ self::class, 'filter_post_type_link' ] );
+				add_filter( 'post_type_link', [ __CLASS__, 'filter_post_type_link' ] );
 			}
 		}
 
 		if ( static::get_archive_route() ) {
-			add_filter( 'post_type_archive_link', [ self::class, 'filter_post_type_archive_link' ] );
+			add_filter( 'post_type_archive_link', [ __CLASS__, 'filter_post_type_archive_link' ] );
 		}
 
 		static::$using_permalinks = ! empty( get_option( 'permalink_structure' ) );
@@ -60,6 +60,7 @@ trait Custom_Post_Permalink {
 	 *
 	 * @param string $link Post type archive link.
 	 * @param string $post_type Post type.
+	 * @return string
 	 */
 	public static function filter_post_type_archive_link( string $link, string $post_type ): string {
 		if ( 'post' === $post_type || ! static::$using_permalinks || static::get_object_name() !== $post_type ) {

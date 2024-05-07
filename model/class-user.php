@@ -67,6 +67,8 @@ class User extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Query builder class to use.
+	 *
+	 * @return string|null
 	 */
 	public static function get_query_builder_class(): ?string {
 		return null;
@@ -74,6 +76,8 @@ class User extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Object ID.
+	 *
+	 * @return int
 	 */
 	public function id(): int {
 		return (int) $this->get( 'id' );
@@ -81,6 +85,8 @@ class User extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Object Name.
+	 *
+	 * @return string
 	 */
 	public function name(): string {
 		return (string) $this->get( 'name' );
@@ -88,6 +94,8 @@ class User extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Object Slug.
+	 *
+	 * @return string
 	 */
 	public function slug(): string {
 		return (string) $this->get( 'slug' );
@@ -95,6 +103,8 @@ class User extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Parent Object (if any)
+	 *
+	 * @return Contracts\Database\Core_Object|null
 	 */
 	public function parent(): ?Contracts\Database\Core_Object {
 		return null;
@@ -102,6 +112,8 @@ class User extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Object Description
+	 *
+	 * @return string
 	 */
 	public function description(): string {
 		return (string) $this->get( 'description' );
@@ -109,6 +121,8 @@ class User extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for Object Status
+	 *
+	 * @return string|null
 	 */
 	public function status(): ?string {
 		return null;
@@ -116,6 +130,8 @@ class User extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Getter for the Object Permalink
+	 *
+	 * @return string|null
 	 */
 	public function permalink(): ?string {
 		return (string) \get_author_posts_url( $this->id() );
@@ -123,6 +139,8 @@ class User extends Model implements Contracts\Database\Core_Object, Contracts\Da
 
 	/**
 	 * Retrieve the core object for the underlying object.
+	 *
+	 * @return \WP_User|null
 	 */
 	public function core_object(): ?\WP_User {
 		$id = $this->id();
@@ -138,10 +156,11 @@ class User extends Model implements Contracts\Database\Core_Object, Contracts\Da
 	 * Save the model.
 	 *
 	 * @param array $attributes Attributes to save.
+	 * @return bool
 	 *
 	 * @throws Model_Exception Thrown on error saving.
 	 */
-	public function save( array $attributes = [] ): bool {
+	public function save( array $attributes = [] ) {
 		$this->set_attributes( $attributes );
 
 		$id = $this->id();

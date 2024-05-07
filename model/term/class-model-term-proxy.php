@@ -19,11 +19,19 @@ use RuntimeException;
  */
 class Model_Term_Proxy {
 	/**
+	 * Model to retrieve term from.
+	 *
+	 * @var Post
+	 */
+	protected Post $model;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param Post $model Model to reference.
 	 */
-	public function __construct( protected Post $model ) {
+	public function __construct( Post $model ) {
+		$this->model = $model;
 	}
 
 	/**
