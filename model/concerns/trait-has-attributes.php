@@ -141,7 +141,7 @@ trait Has_Attributes {
 
 		return tap(
 			$relation->get_results(),
-			function( $relation ) use ( $method ) {
+			function( $relation ) use ( $method ): void {
 				$this->set_relation( $method, $relation );
 			}
 		);
@@ -189,8 +189,6 @@ trait Has_Attributes {
 
 	/**
 	 * Get all model attributes.
-	 *
-	 * @return array
 	 */
 	public function get_attributes(): array {
 		$attributes = [];
@@ -204,8 +202,6 @@ trait Has_Attributes {
 
 	/**
 	 * Get an attribute array of all arrayable attributes.
-	 *
-	 * @return array
 	 */
 	protected function get_arrayable_attributes(): array {
 		return $this->get_arrayable_items( $this->get_attributes() );
@@ -213,16 +209,12 @@ trait Has_Attributes {
 
 	/**
 	 * Convert the models' attributes to an array.
-	 *
-	 * @return array
 	 */
 	public function attributes_to_array(): array {
 		// Retrieve all attributes, passing them through the mutators.
 		$attributes = collect( $this->get_arrayable_attributes() )
 			->map(
-				function( $value, string $attribute ) {
-					return $this->get_attribute( $attribute );
-				}
+				fn ( $value, string $attribute) => $this->get_attribute( $attribute )
 			)
 			->merge( $this->get_arrayable_appends() );
 
@@ -236,7 +228,6 @@ trait Has_Attributes {
 	 * visible attributes if set.
 	 *
 	 * @param string[] $values Values to check.
-	 * @return array
 	 */
 	protected function get_arrayable_items( array $values ): array {
 		$visible = $this->get_visible();
@@ -247,7 +238,7 @@ trait Has_Attributes {
 		}
 
 		if ( ! empty( $hidden ) ) {
-			$values = array_diff_key( $values, array_flip( $hidden ) );
+			return array_diff_key( $values, array_flip( $hidden ) );
 		}
 
 		return $values;
@@ -255,8 +246,6 @@ trait Has_Attributes {
 
 	/**
 	 * Get the raw model attributes.
-	 *
-	 * @return array
 	 */
 	public function get_raw_attributes(): array {
 		return $this->attributes;
@@ -264,8 +253,6 @@ trait Has_Attributes {
 
 	/**
 	 * Get all modified attributes.
-	 *
-	 * @return array
 	 */
 	public function get_modified_attributes(): array {
 		if ( empty( $this->modified_attributes ) ) {
@@ -278,6 +265,15 @@ trait Has_Attributes {
 		}
 
 		return $attributes;
+	}
+
+	/**
+	 * Check if an attribute has been modified.
+	 *
+	 * @param string $attribute Attribute to check.
+	 */
+	public function is_attribute_modified( string $attribute ): bool {
+		return in_array( $attribute, $this->modified_attributes, true );
 	}
 
 	/**
@@ -322,53 +318,35 @@ trait Has_Attributes {
 	 * @return mixed
 	 */
 	protected function cast_attribute( $value, string $cast_type ) {
-		switch ( $cast_type ) {
-			case 'int':
-			case 'integer':
-				return (int) $value;
-			case 'real':
-			case 'float':
-			case 'double':
-				return $this->from_float( $value );
-			case 'string':
-				return (string) $value;
-			case 'bool':
-			case 'boolean':
-				return (bool) $value;
-			case 'object':
-				return $this->from_json( $value, true );
-			case 'array':
-			case 'json':
-				return $this->from_json( $value );
-		}
-
-		return $value;
+		return match ($cast_type) {
+			'int', 'integer' => (int) $value,
+			'real', 'float', 'double' => $this->from_float( $value ),
+			'string' => (string) $value,
+			'bool', 'boolean' => (bool) $value,
+			'object' => $this->from_json( $value, true ),
+			'array', 'json' => $this->from_json( $value ),
+			default => $value,
+		};
 	}
 
 	/**
 	 * Decode the given float.
 	 *
 	 * @param  mixed $value Value to decode.
-	 * @return mixed
 	 */
-	public function from_float( $value ) {
-		switch ( (string) $value ) {
-			case 'Infinity':
-				return INF;
-			case '-Infinity':
-				return -INF;
-			case 'NaN':
-				return NAN;
-			default:
-				return (float) $value;
-		}
+	public function from_float( $value ): float {
+		return match ( (string) $value) {
+			'Infinity' => INF,
+			'-Infinity' => -INF,
+			'NaN' => NAN,
+			default => (float) $value,
+		};
 	}
 
 	/**
 	 * Encode the given value as JSON.
 	 *
 	 * @param mixed $value Value to encode.
-	 * @return string
 	 */
 	protected function as_json( $value ): string {
 		return \wp_json_encode( $value );
@@ -389,7 +367,6 @@ trait Has_Attributes {
 	 * Get the mutator method name for an attribute.
 	 *
 	 * @param string $attribute Attribute name.
-	 * @return string
 	 */
 	public function get_mutator_method_name( string $attribute ): string {
 		return 'get_' . strtolower( $attribute ) . '_attribute';
@@ -399,7 +376,6 @@ trait Has_Attributes {
 	 * Get the set mutator method name for an attribute.
 	 *
 	 * @param string $attribute Attribute name.
-	 * @return string
 	 */
 	public function get_set_mutator_method_name( string $attribute ): string {
 		return 'set_' . strtolower( $attribute ) . '_attribute';
@@ -409,7 +385,6 @@ trait Has_Attributes {
 	 * Check if the attribute has a get mutator.
 	 *
 	 * @param string $attribute Attribute to check.
-	 * @return bool
 	 */
 	public function has_get_mutator( string $attribute ): bool {
 		return method_exists( $this, $this->get_mutator_method_name( $attribute ) );
@@ -419,7 +394,6 @@ trait Has_Attributes {
 	 * Check if the attribute has a set mutator.
 	 *
 	 * @param string $attribute Attribute to check.
-	 * @return bool
 	 */
 	public function has_set_mutator( string $attribute ): bool {
 		return method_exists( $this, $this->get_set_mutator_method_name( $attribute ) );
@@ -462,7 +436,6 @@ trait Has_Attributes {
 	 * Check if an attribute is being appended.
 	 *
 	 * @param string $attribute Attribute to check.
-	 * @return bool
 	 */
 	public function has_appended( string $attribute ): bool {
 		return in_array( $attribute, $this->appends, true );
@@ -484,8 +457,6 @@ trait Has_Attributes {
 
 	/**
 	 * Retrieve all the appendable values in an array.
-	 *
-	 * @return array
 	 */
 	public function get_arrayable_appends(): array {
 		if ( empty( $this->appends ) ) {
@@ -496,9 +467,7 @@ trait Has_Attributes {
 			collect( $this->appends )
 				->combine(
 					collect( $this->appends )->map(
-						function ( string $attribute ) {
-							return $this->get_attribute( $attribute );
-						}
+						fn ( string $attribute) => $this->get_attribute( $attribute )
 					)
 				)
 				->to_array()

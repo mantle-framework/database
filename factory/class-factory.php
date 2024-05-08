@@ -31,14 +31,14 @@ use function Mantle\Support\Helpers\tap;
  * @method \Mantle\Database\Factory\Fluent_Factory<TModel, TObject, TReturnValue> count(int $count)
  */
 abstract class Factory {
-	use Concerns\Resolves_Factories,
-		Conditionable,
-		Macroable;
+	use Concerns\Resolves_Factories;
+	use Conditionable;
+	use Macroable {
+		__call as macro_call;
+	}
 
 	/**
 	 * Flag to return the factory as a model.
-	 *
-	 * @var bool
 	 */
 	protected bool $as_models = false;
 
@@ -88,6 +88,17 @@ abstract class Factory {
 	 */
 	public function create( array $args = [] ): mixed {
 		return $this->make( $args )?->id();
+	}
+
+	/**
+	 * Creates an object and returns its ID.
+	 *
+	 * @deprecated Use create() or create_and_get() instead.
+	 *
+	 * @param array $args The arguments.
+	 */
+	public function create_object( $args ): int|null {
+		return $this->create( $args );
 	}
 
 	/**
@@ -243,8 +254,6 @@ abstract class Factory {
 
 	/**
 	 * Load the factory's definition and make a new instance of the factory.
-	 *
-	 * @return Closure
 	 */
 	public function apply_definition(): Closure {
 		return fn ( array $args, Closure $next ) => $next(
@@ -254,8 +263,6 @@ abstract class Factory {
 
 	/**
 	 * Create a new fluent factory instance.
-	 *
-	 * @return Fluent_Factory
 	 */
 	protected function create_fluent_factory(): Fluent_Factory {
 		return new Fluent_Factory(
@@ -269,9 +276,12 @@ abstract class Factory {
 	 *
 	 * @param string $method The method name.
 	 * @param array  $args   The arguments.
-	 * @return mixed
 	 */
 	public function __call( string $method, array $args ): mixed {
+		if ( static::has_macro( $method ) ) {
+			return $this->macro_call( $method, $args );
+		}
+
 		return $this->create_fluent_factory()->$method( ...$args );
 	}
 }

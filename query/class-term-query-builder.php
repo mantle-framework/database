@@ -7,9 +7,6 @@
 
 namespace Mantle\Database\Query;
 
-use Mantle\Support\Collection;
-use function Mantle\Support\Helpers\collect;
-
 /**
  * Term Query Builder
  *
@@ -26,8 +23,6 @@ class Term_Query_Builder extends Builder {
 
 	/**
 	 * Query Variable Aliases
-	 *
-	 * @var array
 	 */
 	protected array $query_aliases = [
 		'id'      => 'include',
@@ -36,8 +31,6 @@ class Term_Query_Builder extends Builder {
 
 	/**
 	 * Query Where In Aliases
-	 *
-	 * @var array
 	 */
 	protected array $query_where_in_aliases = [
 		'term_id' => 'include',
@@ -47,8 +40,6 @@ class Term_Query_Builder extends Builder {
 
 	/**
 	 * Query Where Not In Aliases
-	 *
-	 * @var array
 	 */
 	protected array $query_where_not_in_aliases = [
 		'name'    => 'name',
@@ -58,8 +49,6 @@ class Term_Query_Builder extends Builder {
 
 	/**
 	 * Query order by aliases.
-	 *
-	 * @var array
 	 */
 	protected array $query_order_by_aliases = [
 		'id' => 'term_id',
@@ -67,8 +56,6 @@ class Term_Query_Builder extends Builder {
 
 	/**
 	 * Get the query arguments.
-	 *
-	 * @return array
 	 */
 	public function get_query_args(): array {
 		if ( is_array( $this->model ) ) {
@@ -90,7 +77,6 @@ class Term_Query_Builder extends Builder {
 
 		return array_merge(
 			[
-				'fields'          => 'ids',
 				'hide_empty'      => false,
 				'meta_query'      => $this->meta_query, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 				'number'          => $this->limit,
@@ -100,6 +86,9 @@ class Term_Query_Builder extends Builder {
 				'taxonomy'        => $taxonomies,
 			],
 			$this->wheres,
+			[
+				'fields' => 'ids',
+			]
 		);
 	}
 
@@ -113,25 +102,28 @@ class Term_Query_Builder extends Builder {
 
 		$this->query_hash = spl_object_hash( $query );
 
+		/**
+		 * Fetch the terms IDs for the query.
+		 *
+		 * @var int[]
+		 */
 		$term_ids = $this->with_clauses(
 			fn (): array => $query->query( $this->get_query_args() ),
 		);
 
 		if ( empty( $term_ids ) ) {
-			return collect();
+			return new Collection(); // @phpstan-ignore-line should return
 		}
 
 		$models = array_map( [ $this->model, 'find' ], $term_ids );
 
 		return $this->eager_load_relations(
-			collect( $models )->filter()->values(),
+			Collection::from( $models )->filter()->values(),
 		);
 	}
 
 	/**
 	 * Get the count of the query results.
-	 *
-	 * @return int
 	 */
 	public function count(): int {
 		$this->take( -1 );
@@ -156,7 +148,6 @@ class Term_Query_Builder extends Builder {
 	 * Dump the SQL query being executed.
 	 *
 	 * @param bool $die Whether to die after dumping the SQL.
-	 * @return static
 	 */
 	public function dumpSql( bool $die = false ): static {
 		add_filter(
@@ -181,8 +172,6 @@ class Term_Query_Builder extends Builder {
 
 	/**
 	 * Dump the SQL query being executed and die.
-	 *
-	 * @return void
 	 */
 	public function ddSql(): void {
 		$this->dumpSql( true );
