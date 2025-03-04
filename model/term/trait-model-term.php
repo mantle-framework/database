@@ -11,7 +11,7 @@ use InvalidArgumentException;
 use Mantle\Database\Model\Model_Exception;
 use Mantle\Database\Model\Term;
 use Mantle\Support\Arr;
-use Mantle\Support\Str;
+use Mantle\Support\Collection;
 use WP_Term;
 
 use function Mantle\Support\Helpers\collect;
@@ -27,7 +27,7 @@ trait Model_Term {
 	/**
 	 * Terms queued for saving.
 	 *
-	 * @var array<mixed>
+	 * @var array
 	 */
 	protected $queued_terms = [];
 
@@ -43,9 +43,14 @@ trait Model_Term {
 	/**
 	 * Allow setting terms through an array via an attribute mutator.
 	 *
-	 * @param array<mixed> $values Term values to set.
+	 * @param array $values Term values to set.
+	 * @throws Model_Exception Thrown on invalid value being set.
 	 */
-	public function set_terms_attribute( array $values ): void {
+	public function set_terms_attribute( $values ) {
+		if ( ! is_array( $values ) ) {
+			throw new Model_Exception( 'Attribute value passed to terms is not an array.' );
+		}
+
 		$this->queued_terms = $values;
 	}
 
@@ -65,6 +70,7 @@ trait Model_Term {
 	 *
 	 * @param string $taxonomy Taxonomy name.
 	 * @param mixed  $value Terms.
+	 * @return void
 	 */
 	public function queue_term_attribute( string $taxonomy, $value ): void {
 		$this->queued_terms[ $taxonomy ] = $value;
@@ -115,19 +121,18 @@ trait Model_Term {
 	 * @param mixed  $terms Accepts an array of or a single instance of terms.
 	 * @param string $taxonomy Taxonomy name, optional.
 	 * @param bool   $append Append to the object's terms, defaults to false.
-	 * @param bool   $create Create the term if it does not exist, defaults to false.
 	 * @return static
 	 *
 	 * @throws Model_Exception Thrown if the $taxonomy cannot be inferred from $terms.
 	 * @throws Model_Exception Thrown if error saving the post's terms.
 	 */
-	public function set_terms( $terms, ?string $taxonomy = null, bool $append = false, bool $create = false ) {
+	public function set_terms( $terms, ?string $taxonomy = null, bool $append = false ) {
 		$terms = collect( Arr::wrap( $terms ) );
 
 		// If taxonomy is not specified, chunk the terms into taxonomy groups.
 		if ( ! $taxonomy ) {
 			$terms = $terms->reduce(
-				function ( array $carry, $term, $index ) use ( $create ): array {
+				function ( array $carry, $term ): array {
 					if ( $term instanceof WP_Term ) {
 						$carry[ $term->taxonomy ][] = $term;
 
@@ -161,33 +166,16 @@ trait Model_Term {
 								continue;
 							}
 
-							// Use the parent array key as the taxonomy if the parent array
-							// key is a string and the current array index is not.
-							if ( ! is_string( $taxonomy ) && is_string( $index ) ) {
-								$taxonomy = $index;
-							}
-
 							// Attempt to infer if the key is a taxonomy slug and this is a
 							// taxonomy => term slug pair.
 							if ( ! is_string( $taxonomy ) || ! taxonomy_exists( $taxonomy ) ) {
 								continue;
 							}
 
-							$term = get_term_object_by( 'slug', $item, $taxonomy );
+							$item = get_term_object_by( 'slug', $item, $taxonomy );
 
-							// Optionally create the term if it does not exist.
-							if ( ! $term && $create ) {
-								$term = wp_insert_term( Str::headline( $item ), $taxonomy, [ 'slug' => $item ] );
-
-								if ( is_wp_error( $term ) ) {
-									throw new Model_Exception( "Error creating term: [{$term->get_error_message()}]" );
-								}
-
-								$term = get_term( $term['term_id'], $taxonomy );
-							}
-
-							if ( $term instanceof WP_Term ) {
-								$carry[ $taxonomy ][] = $term;
+							if ( $item ) {
+								$carry[ $taxonomy ][] = $item;
 							}
 						}
 
@@ -249,7 +237,7 @@ trait Model_Term {
 	 *
 	 * @throws Model_Exception Thrown if the $taxonomy cannot be inferred from $terms.
 	 */
-	public function remove_terms( $terms, ?string $taxonomy = null ) {
+	public function remove_terms( $terms, string $taxonomy = null ) {
 		$terms = collect( Arr::wrap( $terms ) )
 			->map(
 				function ( $term ) use ( &$taxonomy ) {

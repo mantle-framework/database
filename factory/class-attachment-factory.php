@@ -22,7 +22,7 @@ use function Mantle\Support\Helpers\get_post_object;
  * @template TObject of \WP_Post
  * @template TReturnValue
  *
- * @extends Post_Factory<TModel, TObject, TReturnValue>
+ * @extends Factory<TModel, TObject, TReturnValue>
  */
 class Attachment_Factory extends Post_Factory {
 	use Concerns\Generates_Images;
@@ -55,8 +55,9 @@ class Attachment_Factory extends Post_Factory {
 	 * @param int    $width  The width of the image.
 	 * @param int    $height The height of the image.
 	 * @param bool   $recycle Whether to recycle the image file.
+	 * @return static
 	 */
-	public function with_image( ?string $file = null, int $parent = 0, int $width = 640, int $height = 480, bool $recycle = true ): static {
+	public function with_image( string $file = null, int $parent = 0, int $width = 640, int $height = 480, bool $recycle = true ): static {
 		if ( ! $file ) {
 			static $generated_images = [
 				// Use the already generated default 600x480 image.
@@ -75,8 +76,6 @@ class Attachment_Factory extends Post_Factory {
 			if ( ! $file ) {
 				$file = $generated_images[ $hash ] = $this->generate_image( $width, $height );
 			}
-		} elseif ( ! file_exists( $file ) ) {
-			throw new RuntimeException( "File {$file} does not exist." );
 		}
 
 		if ( empty( $file ) ) {
@@ -131,27 +130,6 @@ class Attachment_Factory extends Post_Factory {
 	}
 
 	/**
-	 * Creates an object and returns its ID.
-	 *
-	 * @deprecated Use create() or create_and_get() instead.
-	 *
-	 * @param array $args The arguments.
-	 * @param int   $legacy_parent The parent post ID.
-	 * @param array $legacy_args The arguments.
-	 */
-	public function create_object( $args, $legacy_parent = 0, $legacy_args = [] ): int|null {
-		// Backward compatibility for legacy argument format.
-		if ( is_string( $args ) ) { // @phpstan-ignore-line
-			$file                = $args;
-			$args                = $legacy_args;
-			$args['post_parent'] = $legacy_parent;
-			$args['file']        = $file;
-		}
-
-		return $this->create( $args );
-	}
-
-	/**
 	 * Saves an attachment.
 	 *
 	 * @deprecated Use the `with_image()` method instead.
@@ -169,6 +147,7 @@ class Attachment_Factory extends Post_Factory {
 	 * Retrieves an object by ID.
 	 *
 	 * @param int $object_id The object ID.
+	 * @return Attachment|WP_Post|int|null
 	 */
 	public function get_object_by_id( int $object_id ): Attachment|WP_Post|int|null {
 		return $this->as_models

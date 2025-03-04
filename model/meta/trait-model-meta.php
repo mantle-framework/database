@@ -7,7 +7,6 @@
 
 namespace Mantle\Database\Model\Meta;
 
-use BackedEnum;
 use Mantle\Database\Model\Model_Exception;
 
 /**
@@ -29,6 +28,7 @@ trait Model_Meta {
 	 *
 	 * @param string $meta_key Meta key to retrieve.
 	 * @param bool   $single Return the first meta key, defaults to true.
+	 * @return mixed
 	 */
 	public function get_meta( string $meta_key, bool $single = true ): mixed {
 		return \get_metadata( $this->get_meta_type(), $this->id(), $meta_key, $single );
@@ -39,14 +39,15 @@ trait Model_Meta {
 	 *
 	 * @param string $meta_key Meta key.
 	 * @param mixed  $meta_value Meta value to store.
+	 * @param string $prev_value Optional, previous meta value.
 	 */
-	public function add_meta( string $meta_key, mixed $meta_value ): void {
+	public function add_meta( string $meta_key, mixed $meta_value, mixed $prev_value = '' ): void {
 		if ( ! $this->id() ) {
 			$this->queue_meta_attribute( $meta_key, $meta_value, false );
 			return;
 		}
 
-		\add_metadata( $this->get_meta_type(), $this->id(), $meta_key, $this->serialize_value_for_storage( $meta_value ) );
+		\add_metadata( $this->get_meta_type(), $this->id(), $meta_key, $meta_value );
 	}
 
 	/**
@@ -62,7 +63,7 @@ trait Model_Meta {
 			return;
 		}
 
-		\update_metadata( $this->get_meta_type(), $this->id(), $meta_key, $this->serialize_value_for_storage( $meta_value ), $prev_value );
+		\update_metadata( $this->get_meta_type(), $this->id(), $meta_key, $meta_value, $prev_value );
 	}
 
 	/**
@@ -72,7 +73,7 @@ trait Model_Meta {
 	 * @param mixed  $meta_value Previous meta value to delete.
 	 */
 	public function delete_meta( string $meta_key, mixed $meta_value = '' ): void {
-		\delete_metadata( $this->get_meta_type(), $this->id(), $meta_key, $this->serialize_value_for_storage( $meta_value ) );
+		\delete_metadata( $this->get_meta_type(), $this->id(), $meta_key, $meta_value );
 	}
 
 	/**
@@ -91,7 +92,7 @@ trait Model_Meta {
 	 * @throws Model_Exception Thrown on invalid value being set.
 	 */
 	public function set_meta_attribute( $meta_values ): void {
-		if ( ! is_array( $meta_values ) ) { // @phpstan-ignore-line function.alreadyNarrowedType
+		if ( ! is_array( $meta_values ) ) {
 			throw new Model_Exception( 'Attribute value passed to meta is not an array.' );
 		}
 
@@ -120,6 +121,7 @@ trait Model_Meta {
 	 * @param string $key Meta key.
 	 * @param mixed  $value Meta value.
 	 * @param bool   $update Flag to update the queued meta.
+	 * @return void
 	 */
 	public function queue_meta_attribute( string $key, $value, bool $update = true ): void {
 		$this->queued_meta[ $key ] = [ $value, $update ];
@@ -138,18 +140,5 @@ trait Model_Meta {
 		}
 
 		$this->queued_meta = [];
-	}
-
-	/**
-	 * Serialize meta value for storage, converting all backed enums to their value.
-	 *
-	 * @param mixed $value Value to serialize.
-	 */
-	protected function serialize_value_for_storage( mixed $value ): mixed {
-		if ( $value instanceof BackedEnum ) {
-			return $value->value;
-		}
-
-		return $value;
 	}
 }

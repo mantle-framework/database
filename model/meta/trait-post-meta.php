@@ -13,6 +13,8 @@ namespace Mantle\Database\Model\Meta;
 trait Post_Meta {
 	/**
 	 * Get the meta type for the object.
+	 *
+	 * @return string
 	 */
 	public function get_meta_type(): string {
 		return 'post';

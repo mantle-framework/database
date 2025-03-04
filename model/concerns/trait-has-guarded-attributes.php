@@ -37,6 +37,8 @@ trait Has_Guarded_Attributes {
 
 	/**
 	 * Check if the model is guarded.
+	 *
+	 * @return bool
 	 */
 	public function is_model_guarded(): bool {
 		return $this->guarded;
@@ -47,7 +49,7 @@ trait Has_Guarded_Attributes {
 	 *
 	 * @param bool $guarded Flag if the model is being guarded.
 	 */
-	public function set_model_guard( bool $guarded ): void {
+	public function set_model_guard( bool $guarded ) {
 		$this->guarded = $guarded;
 	}
 
@@ -55,6 +57,8 @@ trait Has_Guarded_Attributes {
 	 * Check if a model attribute is guarded.
 	 *
 	 * @param string $attribute Attribute to check.
+	 *
+	 * @return bool
 	 */
 	public function is_guarded( string $attribute ): bool {
 		if ( ! $this->guarded ) {
@@ -69,7 +73,7 @@ trait Has_Guarded_Attributes {
 	 *
 	 * @param bool $guarded Flag if the model is guarded.
 	 */
-	public function guard( bool $guarded ): void {
+	public function guard( bool $guarded ) {
 		$this->guarded = $guarded;
 	}
 
@@ -98,15 +102,19 @@ trait Has_Guarded_Attributes {
 	 * Disable all mass assignable restrictions.
 	 *
 	 * @param bool $state
+	 *
+	 * @return void
 	 */
-	public static function unguard( $state = true ): void {
+	public static function unguard( $state = true ) {
 		static::$unguarded = $state;
 	}
 
 	/**
 	 * Enable the mass assignment restrictions.
+	 *
+	 * @return void
 	 */
-	public static function reguard(): void {
+	public static function reguard() {
 		static::$unguarded = false;
 	}
 }

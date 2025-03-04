@@ -63,7 +63,7 @@ class Belongs_To extends Relation {
 	/**
 	 * Add constraints to the query.
 	 */
-	public function add_constraints(): void {
+	public function add_constraints() {
 		if ( ! static::$constraints ) {
 			return;
 		}
@@ -100,6 +100,7 @@ class Belongs_To extends Relation {
 	 * Set the query constraints for an eager load of the relation.
 	 *
 	 * @param Collection $models Models to eager load for.
+	 * @return void
 	 *
 	 * @throws RuntimeException Thrown on eager loading term relationships.
 	 */
@@ -111,7 +112,9 @@ class Belongs_To extends Relation {
 
 			$meta_values = $models
 				->map(
-					fn ( $model ) => $model->get_meta( $this->local_key, ! $append )
+					function ( $model ) use ( $append ) {
+						return $model->get_meta( $this->local_key, ! $append );
+					}
 				)
 				->filter();
 
@@ -137,20 +140,12 @@ class Belongs_To extends Relation {
 	/**
 	 * Associate a model with a relationship.
 	 *
-	 * @param int|Model $model Model to save to.
+	 * @param Model $model Model to save to.
 	 * @return Model
 	 *
 	 * @throws Model_Exception Thrown on error setting term for relationship.
 	 */
-	public function associate( int|Model $model ) {
-		if ( is_int( $model ) ) {
-			$model = $this->related::find_or_fail( $model );
-
-			if ( ! $model instanceof Model ) {
-				throw new Model_Exception( 'Model must be an instance of Core_Object.' );
-			}
-		}
-
+	public function associate( Model $model ) {
 		if ( ! $model->exists && $model instanceof Updatable ) {
 			$model->save();
 		}
@@ -167,7 +162,7 @@ class Belongs_To extends Relation {
 			throw new Model_Exception( 'Parent model must be an instance of Model_Meta.' );
 		}
 
-		$append = Belongs_To_Many::class === static::class || is_subclass_of( $this, Belongs_To_Many::class );
+		$append = Belongs_To_Many::class === $this::class || is_subclass_of( $this, Belongs_To_Many::class );
 
 		if ( $this->uses_terms ) {
 			$set = wp_set_post_terms( $this->parent->id(), [ $this->get_term_for_relationship( $model ) ], static::RELATION_TAXONOMY, $append );
@@ -193,10 +188,10 @@ class Belongs_To extends Relation {
 	/**
 	 * Proxy to `Belongs_To::associate()`.
 	 *
-	 * @param int|Model $model Model to save to.
+	 * @param Model $model Model to save to.
 	 * @return Model
 	 */
-	public function save( int|Model $model ) {
+	public function save( Model $model ) {
 		return $this->associate( $model );
 	}
 
@@ -241,6 +236,7 @@ class Belongs_To extends Relation {
 	 * @param Builder     $builder Query builder instance.
 	 * @param string|null $compare_value Value to compare against, optional.
 	 * @param string      $compare Comparison operator (=, >, EXISTS, etc.).
+	 * @return Builder
 	 *
 	 * @throws Model_Exception Thrown on unsupported relationship method.
 	 */
@@ -260,6 +256,7 @@ class Belongs_To extends Relation {
 	 * Retrieve a internal term for a post-to-post relationship.
 	 *
 	 * @param Model|string $model Model instance/id.
+	 * @return int
 	 * @throws Model_Exception Thrown on error creating internal term with a post to term or term to post relationship.
 	 */
 	protected function get_term_for_relationship( $model ): int {
@@ -283,6 +280,7 @@ class Belongs_To extends Relation {
 	 * Retrieve the term slug for a post-to-post relationship.
 	 *
 	 * @param Model|string $model Model instance/id.
+	 * @return string
 	 */
 	protected function get_term_slug_for_relationship( $model ): string {
 		$delimiter = Has_One_Or_Many::DELIMITER;
@@ -313,7 +311,7 @@ class Belongs_To extends Relation {
 
 		return collect( $object_terms )
 			->filter(
-				function ( WP_Term $term ): bool {
+				function( WP_Term $term ) {
 					$key = Str::before_last( $term->slug, Has_One_Or_Many::DELIMITER );
 					$id  = Str::after_last( $term->slug, Has_One_Or_Many::DELIMITER );
 
@@ -321,7 +319,7 @@ class Belongs_To extends Relation {
 				}
 			)
 			->map(
-				function ( WP_Term $term ) use ( $return_term_ids ) {
+				function( WP_Term $term ) use ( $return_term_ids ) {
 					if ( $return_term_ids ) {
 						return $term->term_id;
 					}
@@ -338,12 +336,13 @@ class Belongs_To extends Relation {
 	 *
 	 * @param Collection $models Parent models.
 	 * @param Collection $results Eagerly loaded results to match.
+	 * @return Collection
 	 */
 	public function match( Collection $models, Collection $results ): Collection {
 		$dictionary = $this->build_dictionary( $results, $models );
 
 		return $models->each(
-			function ( $model ) use ( $dictionary ): void {
+			function( $model ) use ( $dictionary ) {
 				$key = $model->meta->{$this->local_key};
 
 				$model->set_relation( $this->relationship, $dictionary[ $key ][0] ?? null );
@@ -356,19 +355,24 @@ class Belongs_To extends Relation {
 	 *
 	 * @param Collection $results Collection of results.
 	 * @param Collection $models Eagerly loaded results to match.
+	 * @return array
 	 */
 	protected function build_dictionary( Collection $results, Collection $models ): array {
 		return $results
 			->map_to_dictionary(
-				fn ( $result ) => [ (string) $result[ $this->foreign_key ] => $result ]
+				function ( $result ) {
+					return [ (string) $result[ $this->foreign_key ] => $result ];
+				}
 			)
 			->all();
 	}
 
 	/**
 	 * Flag if the meta should appended.
+	 *
+	 * @return bool
 	 */
 	protected function should_append(): bool {
-		return Belongs_To_Many::class === static::class || is_subclass_of( $this, Belongs_To_Many::class );
+		return Belongs_To_Many::class === get_class( $this ) || is_subclass_of( $this, Belongs_To_Many::class );
 	}
 }
