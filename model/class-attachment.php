@@ -12,7 +12,7 @@ use Mantle\Facade\Storage;
 /**
  * Attachment Model
  *
- * @method static \Mantle\Database\Factory\Post_Factory<static, \WP_Post, static> factory( array|callable|null $state = null )
+ * @method static \Mantle\Database\Factory\Attachment_Factory<static, \WP_Post, static> factory( array|callable|null $state = null )
  */
 class Attachment extends Post {
 	/**
@@ -32,12 +32,11 @@ class Attachment extends Post {
 	/**
 	 * Get an attachment's URL by size.
 	 *
-	 * @param array|string $size Image URL.
-	 * @return string|null
+	 * @param array|string $size Image size or array of dimensions.
 	 *
 	 * @throws Model_Exception Thrown when getting image.
 	 */
-	public function image_url( $size ): ?string {
+	public function image_url( array|string $size ): ?string {
 		if ( ! $this->id() ) {
 			throw new Model_Exception( 'Unable to get attachment URL for unsaved attachment.' );
 		}
@@ -47,8 +46,6 @@ class Attachment extends Post {
 
 	/**
 	 * Get the full-size attachment URL.
-	 *
-	 * @return string|null
 	 */
 	public function url(): ?string {
 		$settings = $this->get_cloud_settings();
@@ -72,7 +69,6 @@ class Attachment extends Post {
 	 * Retrieve a temporary URL for a file.
 	 *
 	 * @param \DateTimeInterface $expiration File expiration.
-	 * @return string|null
 	 */
 	public function get_temporary_url( $expiration = null ): ?string {
 		$settings = $this->get_cloud_settings();
@@ -92,8 +88,6 @@ class Attachment extends Post {
 
 	/**
 	 * Get the stored cloud settings for an attachment.
-	 *
-	 * @return array|null
 	 */
 	protected function get_cloud_settings(): ?array {
 		return (array) $this->get_meta( static::META_KEY_CLOUD_STORAGE, true );
@@ -121,7 +115,6 @@ class Attachment extends Post {
 	 *        @type null|string $title          Title text. Null defaults to the
 	 *                                          sanitized filename.
 	 * }
-	 * @return Model
 	 * @throws Model_Exception Thrown on error sideloading image.
 	 */
 	public static function create_from_url( string $url, array $args = [] ): Model {
@@ -159,7 +152,7 @@ class Attachment extends Post {
 
 		// If error storing permanently, unlink.
 		if ( \is_wp_error( $attachment_id ) ) {
-			@unlink( $file_array['tmp_name'] ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_unlink
+			@unlink( $file_array['tmp_name'] ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_unlink, Generic.PHP.NoSilencedErrors.Forbidden
 			throw new Model_Exception( $attachment_id->get_error_message() );
 		}
 
@@ -176,11 +169,10 @@ class Attachment extends Post {
 	 * Save the model.
 	 *
 	 * @param array $attributes Attributes to save.
-	 * @return bool
 	 *
 	 * @throws Model_Exception Thrown on error saving.
 	 */
-	public function save( array $attributes = [] ) {
+	public function save( array $attributes = [] ): bool {
 		$this->set_attributes( $attributes );
 
 		$id = $this->id();

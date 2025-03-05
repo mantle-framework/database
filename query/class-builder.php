@@ -3,7 +3,7 @@
  * Builder class file.
  *
  * phpcs:disable WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
- * phpcs:disable Squiz.Commenting.FunctionComment
+ * phpcs:disable Squiz.Commenting.VariableComment.Missing, Squiz.Commenting.FunctionComment
  * phpcs:disable PEAR.Functions.FunctionCallSignature.CloseBracketLine, PEAR.Functions.FunctionCallSignature.MultipleArguments, PEAR.Functions.FunctionCallSignature.ContentAfterOpenBracket
  *
  * @package Mantle
@@ -11,6 +11,7 @@
 
 namespace Mantle\Database\Query;
 
+use BackedEnum;
 use Closure;
 use Mantle\Container\Container;
 use Mantle\Contracts\Database\Scope;
@@ -26,50 +27,33 @@ use Mantle\Support\Collection;
 use Mantle\Support\Str;
 use Mantle\Support\Traits\Conditionable;
 
-use function Mantle\Support\Helpers\collect;
-
 /**
  * Builder Query Builder
  *
  * @template TModel of \Mantle\Database\Model\Model
  */
 abstract class Builder {
-	use Conditionable,
-		Query_Bindings,
-		Query_Clauses;
-
-	/**
-	 * Model to build on.
-	 *
-	 * @var string[]|string
-	 */
-	protected $model;
+	use Conditionable;
+	use Query_Bindings;
+	use Query_Clauses;
 
 	/**
 	 * Result limit per-page.
-	 *
-	 * @var int|null
 	 */
 	protected ?int $limit = 100;
 
 	/**
 	 * Result offset.
-	 *
-	 * @var int
 	 */
 	protected int $offset = 0;
 
 	/**
 	 * Result page.
-	 *
-	 * @var int
 	 */
 	protected int $page = 1;
 
 	/**
 	 * Where arguments for the query.
-	 *
-	 * @var array
 	 */
 	protected array $wheres = [];
 
@@ -89,52 +73,38 @@ abstract class Builder {
 
 	/**
 	 * Meta Query.
-	 *
-	 * @var array
 	 */
 	protected array $meta_query = [];
 
 	/**
 	 * Query Variable Aliases
-	 *
-	 * @var array
 	 */
 	protected array $query_aliases = [];
 
 	/**
 	 * Query Where In Aliases
-	 *
-	 * @var array
 	 */
 	protected array $query_where_in_aliases = [];
 
 	/**
 	 * Query Where Not In Aliases
-	 *
-	 * @var array
 	 */
 	protected array $query_where_not_in_aliases = [];
 
 	/**
 	 * Query order by aliases.
-	 *
-	 * @var array
 	 */
 	protected array $query_order_by_aliases = [];
 
 	/**
 	 * Applied global scopes.
-	 *
-	 * @var array
 	 */
 	protected array $scopes = [];
 
 	/**
 	 * Storage of the found rows for a query.
-	 *
-	 * @var int
 	 */
-	protected int $found_rows = 0;
+	protected ?int $found_rows = 0;
 
 	/**
 	 * Relationships to eager load.
@@ -145,19 +115,16 @@ abstract class Builder {
 
 	/**
 	 * Query hash for the built query.
-	 *
-	 * @var string
 	 */
 	protected string $query_hash = '';
 
 	/**
 	 * Constructor.
 	 *
-	 * @param array|string $model Model or array of model class names.
+	 * @param string|string[] $model Model name or array of model names.
+	 * @phpstan-param class-string<TModel>|array<class-string<TModel>> $model
 	 */
-	public function __construct( $model ) {
-		$this->model = $model;
-	}
+	public function __construct( protected array|string $model ) {}
 
 	/**
 	 * Get the query results.
@@ -168,31 +135,23 @@ abstract class Builder {
 
 	/**
 	 * Get the count of the query results.
-	 *
-	 * @return int
 	 */
 	abstract public function count(): int;
 
 	/**
 	 * Get the query arguments.
-	 *
-	 * @return array
 	 */
 	abstract public function get_query_args(): array;
 
 	/**
 	 * Dump the SQL query for the request.
-	 *
-	 * @return static
 	 */
 	abstract public function dumpSql(): static;
 
 	/**
 	 * Dump the SQL query for the request and stop execution.
-	 *
-	 * @return void
 	 */
-	abstract public function ddSql(): void;
+	abstract public function ddSql(): never;
 
 	/**
 	 * Get a model instance for the builder.
@@ -206,8 +165,6 @@ abstract class Builder {
 	/**
 	 * Get the model instance for the builder.
 	 *
-	 * @return Model
-	 *
 	 * @throws Query_Exception Thrown when trying to use with multiple models.
 	 */
 	protected function get_model_instance(): Model {
@@ -220,8 +177,6 @@ abstract class Builder {
 
 	/**
 	 * Retrieve the found rows for a query.
-	 *
-	 * @return int
 	 */
 	public function get_found_rows(): int {
 		return $this->found_rows;
@@ -247,7 +202,7 @@ abstract class Builder {
 			throw new Query_Exception( 'Unknown where in alias: ' . $attribute );
 		}
 
-		return $this->where( $attribute, (array) $values );
+		return $this->where( $attribute, $values );
 	}
 
 	/**
@@ -277,10 +232,10 @@ abstract class Builder {
 	 * Create a query builder for a model.
 	 *
 	 * @param array|string $model Model name or array of model names.
-	 * @return static
+	 * @return static<TModel>
 	 */
 	public static function create( $model ) {
-		return new static( $model );
+		return new static( $model ); // @phpstan-ignore-line return.type
 	}
 
 	/**
@@ -289,7 +244,6 @@ abstract class Builder {
 	 * @param string|array $attribute Attribute to use or array of key => value
 	 *                                attributes to set.
 	 * @param mixed        $value Value to compare against.
-	 * @return static
 	 */
 	public function where( array|string $attribute, mixed $value = '' ): static {
 		if ( is_array( $attribute ) && empty( $value ) ) {
@@ -337,11 +291,10 @@ abstract class Builder {
 	 * query aliases.
 	 *
 	 * @param string $attribute Attribute name.
-	 * @return string
 	 */
 	protected function resolve_attribute( string $attribute ): string {
 		if ( ! empty( $this->query_aliases[ strtolower( $attribute ) ] ) ) {
-			$attribute = $this->query_aliases[ strtolower( $attribute ) ];
+			return $this->query_aliases[ strtolower( $attribute ) ];
 		}
 
 		return $attribute;
@@ -350,12 +303,20 @@ abstract class Builder {
 	/**
 	 * Query by a meta field.
 	 *
-	 * @param string $key Meta key.
-	 * @param mixed  $value Meta value.
-	 * @param string $compare Comparison method, defaults to '='.
+	 * @param string|\BackedEnum $key Meta key.
+	 * @param mixed              $value Meta value.
+	 * @param string             $compare Comparison method, defaults to '='.
 	 * @return static
 	 */
 	public function whereMeta( $key, $value, string $compare = '=' ) {
+		if ( $key instanceof BackedEnum ) {
+			$key = $key->value;
+		}
+
+		if ( $value instanceof BackedEnum ) {
+			$value = $value->value;
+		}
+
 		$meta_query = [
 			'compare' => $compare,
 			'key'     => $key,
@@ -368,6 +329,7 @@ abstract class Builder {
 		}
 
 		$this->meta_query[] = $meta_query;
+
 		return $this;
 	}
 
@@ -381,6 +343,7 @@ abstract class Builder {
 	 */
 	public function andWhereMeta( ...$args ) {
 		$this->meta_query['relation'] = 'AND';
+
 		return $this->whereMeta( ...$args );
 	}
 
@@ -394,6 +357,7 @@ abstract class Builder {
 	 */
 	public function orWhereMeta( ...$args ) {
 		$this->meta_query['relation'] = 'OR';
+
 		return $this->whereMeta( ...$args );
 	}
 
@@ -424,7 +388,6 @@ abstract class Builder {
 	 *
 	 * @param string $attribute Attribute name.
 	 * @param string $direction Order direction.
-	 * @return static
 	 */
 	public function order_by( string $attribute, string $direction = 'asc' ): static {
 		return $this->orderBy( $attribute, $direction );
@@ -432,8 +395,6 @@ abstract class Builder {
 
 	/**
 	 * Reorder the query and remove existing order by clauses.
-	 *
-	 * @return static
 	 */
 	public function removeOrder(): static {
 		$this->order_by = [];
@@ -444,8 +405,6 @@ abstract class Builder {
 
 	/**
 	 * Alias for `removeOrder()`.
-	 *
-	 * @return static
 	 */
 	public function remove_order(): static {
 		return $this->removeOrder();
@@ -522,7 +481,6 @@ abstract class Builder {
 	 * Alias for `orderByWhereIn()`.
 	 *
 	 * @param string $attribute Attribute to use.
-	 * @return static
 	 */
 	public function order_by_where_in( string $attribute ): static {
 		return $this->orderByWhereIn( $attribute );
@@ -532,7 +490,6 @@ abstract class Builder {
 	 * Determine if the given model has a scope.
 	 *
 	 * @param string $scope Scope name.
-	 * @return bool
 	 */
 	public function has_named_scope( string $scope ): bool {
 		// Disable model scopes for multi-model queries.
@@ -565,9 +522,7 @@ abstract class Builder {
 	 */
 	protected function call_named_scope( string $scope, array $parameters = [] ) {
 		return $this->call_scope(
-			function ( ...$parameters ) use ( $scope ) {
-				return $this->get_model_instance()->call_named_scope( $scope, $parameters );
-			},
+			fn ( ...$parameters ) => $this->get_model_instance()->call_named_scope( $scope, $parameters ),
 			$parameters
 		);
 	}
@@ -583,9 +538,9 @@ abstract class Builder {
 			return $this;
 		}
 
-		foreach ( $this->scopes as $identifier => $scope ) {
+		foreach ( $this->scopes as $scope ) {
 			$this->call_scope(
-				function( self $builder ) use ( $scope ) {
+				function ( self $builder ) use ( $scope ) {
 					if ( $scope instanceof Closure ) {
 						return $scope( $builder );
 					}
@@ -642,7 +597,6 @@ abstract class Builder {
 	 *
 	 * @param int $page Page to set.
 	 * @param int $limit Limit to set.
-	 * @return static
 	 */
 	public function for_page( int $page, int $limit = 20 ): static {
 		return $this->page( $page )->take( $limit );
@@ -654,7 +608,6 @@ abstract class Builder {
 	 * @param int      $per_page Per page to set.
 	 * @param int|null $last_id Last ID to use.
 	 * @param string   $column Column to use.
-	 * @return static
 	 */
 	public function for_page_after_id( int $per_page, ?int $last_id = null, string $column = 'id' ): static {
 		if ( ! is_null( $last_id ) ) {
@@ -689,7 +642,7 @@ abstract class Builder {
 		$model = $this->first();
 
 		if ( ! $model ) {
-			throw ( new Model_Not_Found_Exception() )->set_model( $this->model );
+			throw new Model_Not_Found_Exception( $this->model );
 		}
 
 		return $model;
@@ -709,8 +662,6 @@ abstract class Builder {
 
 	/**
 	 * Get all the results of a query.
-	 *
-	 * @return Collection
 	 */
 	public function all(): Collection {
 		return $this->take( -1 )->get();
@@ -720,9 +671,8 @@ abstract class Builder {
 	 * Delete the results of this query.
 	 *
 	 * @param bool $force Flag to force delete.
-	 * @return void
 	 */
-	public function delete( bool $force = false ) {
+	public function delete( bool $force = false ): void {
 		$this->all()->each->delete( $force ); // @phpstan-ignore-line undefined method
 	}
 
@@ -731,9 +681,8 @@ abstract class Builder {
 	 *
 	 * @param int $per_page Items per page.
 	 * @param int $current_page Current page number.
-	 * @return PaginatorContract
 	 */
-	public function simple_paginate( int $per_page = 20, int $current_page = null ): PaginatorContract {
+	public function simple_paginate( int $per_page = 20, ?int $current_page = null ): PaginatorContract {
 		return Container::get_instance()->make(
 			Paginator::class,
 			[
@@ -749,9 +698,8 @@ abstract class Builder {
 	 *
 	 * @param int $per_page Items per page.
 	 * @param int $current_page Current page number.
-	 * @return PaginatorContract
 	 */
-	public function paginate( int $per_page = 20, int $current_page = null ): PaginatorContract {
+	public function paginate( int $per_page = 20, ?int $current_page = null ): PaginatorContract {
 		return Container::get_instance()->make(
 			Length_Aware_Paginator::class,
 			[
@@ -771,7 +719,6 @@ abstract class Builder {
 	 *
 	 * @param int                                                           $count Number of items to chunk by.
 	 * @param callable(\Mantle\Support\Collection<int, TModel>, int): mixed $callback Callback to run on each chunk.
-	 * @return boolean
 	 */
 	public function chunk( int $count, callable $callback ): bool {
 		$page = 1;
@@ -807,7 +754,6 @@ abstract class Builder {
 	 * @param int                                                           $count Number of items to chunk by.
 	 * @param callable(\Mantle\Support\Collection<int, TModel>, int): mixed $callback Callback to run on each chunk.
 	 * @param string                                                        $attribute Attribute to chunk by.
-	 * @return boolean
 	 */
 	public function chunk_by_id( int $count, callable $callback, string $attribute = 'id' ): bool {
 		$last_id = null;
@@ -849,12 +795,12 @@ abstract class Builder {
 	/**
 	 * Execute a callback over each item while chunking.
 	 *
-	 * @param callable(\Mantle\Support\Collection<int, TModel>): mixed $callback Callback to run on each chunk.
-	 * @param int                                                       $count Number of items to chunk by.
+	 * @param callable(TModel): mixed $callback Callback to run on each chunk.
+	 * @param int                     $count Number of items to chunk by.
 	 * @return boolean
 	 */
 	public function each( callable $callback, int $count = 100 ) {
-		return $this->chunk( $count, function ( Collection $results ) use ( $callback ) {
+		return $this->chunk( $count, function ( Collection $results ) use ( $callback ): bool {
 			foreach ( $results as $result ) {
 				if ( false === $callback( $result ) ) {
 					return false;
@@ -868,13 +814,13 @@ abstract class Builder {
 	/**
 	 * Execute a callback over each item while chunking by ID.
 	 *
-	 * @param callable(\Mantle\Support\Collection<int, TModel>): mixed $callback Callback to run on each chunk.
-	 * @param int                                                       $count Number of items to chunk by.
-	 * @param string                                                    $attribute Attribute to chunk by.
+	 * @param callable(TModel): mixed $callback Callback to run on each chunk.
+	 * @param int                     $count Number of items to chunk by.
+	 * @param string                  $attribute Attribute to chunk by.
 	 * @return boolean
 	 */
 	public function each_by_id( callable $callback, int $count = 100, string $attribute = 'id' ) {
-		return $this->chunk_by_id( $count, function ( Collection $results ) use ( $callback ) {
+		return $this->chunk_by_id( $count, function ( Collection $results ) use ( $callback ): bool {
 			foreach ( $results as $result ) {
 				if ( false === $callback( $result ) ) {
 					return false;
@@ -883,6 +829,27 @@ abstract class Builder {
 
 			return true;
 		}, $attribute );
+	}
+
+	/**
+	 * Map the query results to a new collection.
+	 *
+	 * @template TMapValue
+	 *
+	 * @param callable(TModel): TMapValue $callback Callback to run on each chunk.
+	 * @param int                     $count Number of items to chunk by.
+	 * @return Collection<int, TMapValue>
+	 */
+	public function map( callable $callback, int $count = 100 ) {
+		$results = new Collection();
+
+		$this->chunk( $count, function ( Collection $items ) use ( $callback, $results ): bool {
+			$results->push( ...$items->map( $callback ) );
+
+			return true;
+		} );
+
+		return $results;
 	}
 
 	/**
@@ -914,24 +881,19 @@ abstract class Builder {
 	/**
 	 * Collect all the model object names in an associative Collection.
 	 *
-	 * @return Collection Collection with object names as keys and model
-	 *                    class names as values.
+	 * @return Collection<string, class-string<\Mantle\Database\Model\Model>> Collection of model class names keyed by object name.
 	 */
 	public function get_model_object_names(): Collection {
-		return collect( (array) $this->model )
+		return ( new Collection( (array) $this->model ) ) // @phpstan-ignore-line should return
 			->combine( $this->model )
 			->map(
-				function ( $model ) {
-					return $model::get_object_name();
-				}
+				fn ( $model ) => $model::get_object_name(),
 			)
 			->flip();
 	}
 
 	/**
 	 * Retrieve the hash of the query object.
-	 *
-	 * @return string
 	 */
 	public function get_query_hash(): string {
 		return $this->query_hash;
@@ -961,8 +923,6 @@ abstract class Builder {
 
 	/**
 	 * Dump the query variables being passed to WP_Query.
-	 *
-	 * @return static
 	 */
 	public function dump(): static {
 		dump( $this->get_query_args() );
@@ -972,18 +932,14 @@ abstract class Builder {
 
 	/**
 	 * Dump the query variables being passed to WP_Query and die.
-	 *
-	 * @return void
 	 */
-	public function dd(): void {
+	public function dd(): never {
 		$this->dump();
 		die;
 	}
 
 	/**
 	 * Check if any models are found for the current query.
-	 *
-	 * @return bool
 	 */
 	public function exists(): bool {
 		return $this->count() > 0;
@@ -991,8 +947,6 @@ abstract class Builder {
 
 	/**
 	 * Check if no models are found for the current query.
-	 *
-	 * @return bool
 	 */
 	public function doesntExist(): bool {
 		return ! $this->exists();
@@ -1000,8 +954,6 @@ abstract class Builder {
 
 	/**
 	 * Alias for `doesntExists()`.
-	 *
-	 * @return bool
 	 */
 	public function doesnt_exist(): bool {
 		return $this->doesntExist();
