@@ -10,7 +10,7 @@ namespace Mantle\Database\Query;
 /**
  * Term Query Builder
  *
- * @template TModel of \Mantle\Database\Model\Term
+ * @template TModel of \Mantle\Database\Model\Model
  * @extends \Mantle\Database\Query\Builder<TModel>
  *
  * @method \Mantle\Database\Query\Term_Query_Builder<TModel> whereId( int $id )
@@ -106,27 +106,20 @@ class Term_Query_Builder extends Builder {
 		/**
 		 * Fetch the terms IDs for the query.
 		 *
-		 * @var int[] $term_ids
+		 * @var int[]
 		 */
 		$term_ids = $this->with_clauses(
-			fn (): array => (array) $query->query( $this->get_query_args() ),
+			fn (): array => $query->query( $this->get_query_args() ),
 		);
 
 		if ( empty( $term_ids ) ) {
 			return new Collection();
 		}
 
-		/**
-		 * Term models.
-		 *
-		 * @var class-string<TModel> $model
-		 */
-		$model = is_array( $this->model ) ? reset( $this->model ) : $this->model;
-
-		$models = array_map( [ $model, 'find' ], $term_ids );
+		$models = array_map( [ $this->model, 'find' ], $term_ids );
 
 		return $this->eager_load_relations(
-			Collection::from( $models )->filter()->values(), // @phpstan-ignore-line argument.type
+			Collection::from( $models )->filter()->values(),
 		);
 	}
 

@@ -13,8 +13,10 @@ namespace Mantle\Database\Pagination;
 class Length_Aware_Paginator extends Paginator {
 	/**
 	 * Storage of the found rows.
+	 *
+	 * @var int
 	 */
-	protected ?int $found_rows = null;
+	protected $found_rows;
 
 	/**
 	 * View name to load.

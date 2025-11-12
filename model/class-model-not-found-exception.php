@@ -7,7 +7,6 @@
 
 namespace Mantle\Database\Model;
 
-use Mantle\Database\Model\Model;
 use Mantle\Support\Arr;
 
 /**
@@ -17,8 +16,8 @@ class Model_Not_Found_Exception extends Model_Exception {
 	/**
 	 * Constructor.
 	 *
-	 * @param array<class-string<Model>>|string $model Name of the affected Eloquent model(s).
-	 * @param array<mixed>                      $ids Model ID(s).
+	 * @param array<string>|string $model Name of the affected Eloquent model(s).
+	 * @param array<int>           $ids Model ID(s).
 	 */
 	public function __construct( public array|string $model, public array $ids = [] ) {
 		$this->set_message();
@@ -27,10 +26,10 @@ class Model_Not_Found_Exception extends Model_Exception {
 	/**
 	 * Set the affected Eloquent model and instance ids.
 	 *
-	 * @param array<class-string<Model>>|string $model Name of the affected Eloquent model(s).
-	 * @param array<mixed>                      $ids Model ID(s).
+	 * @param string         $model Model name.
+	 * @param int|array<int> $ids Model ID(s).
 	 */
-	public function set_model( array|string $model, array $ids = [] ): static {
+	public function set_model( string $model, $ids = [] ): static {
 		$this->model = $model;
 		$this->ids   = Arr::wrap( $ids );
 
@@ -41,17 +40,15 @@ class Model_Not_Found_Exception extends Model_Exception {
 
 	/**
 	 * Get the affected Eloquent model.
-	 *
-	 * @return array<class-string<Model>>|string
 	 */
-	public function get_model(): array|string {
+	public function get_model(): string {
 		return $this->model;
 	}
 
 	/**
 	 * Get the affected Eloquent model IDs.
 	 *
-	 * @return array<mixed>
+	 * @return array<int>
 	 */
 	public function get_ids(): array {
 		return $this->ids;

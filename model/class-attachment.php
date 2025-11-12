@@ -7,8 +7,6 @@
 
 namespace Mantle\Database\Model;
 
-use Carbon\Carbon;
-use DateTimeInterface;
 use Mantle\Facade\Storage;
 
 /**
@@ -72,7 +70,7 @@ class Attachment extends Post {
 	 *
 	 * @param \DateTimeInterface $expiration File expiration.
 	 */
-	public function get_temporary_url( ?DateTimeInterface $expiration = null ): ?string {
+	public function get_temporary_url( $expiration = null ): ?string {
 		$settings = $this->get_cloud_settings();
 
 		if ( empty( $settings['disk'] ) ) {
@@ -82,7 +80,7 @@ class Attachment extends Post {
 		$disk = $settings['disk'];
 
 		if ( is_null( $expiration ) ) {
-			$expiration = Carbon::now()->addSeconds( max( 1, (int) config( "filesystem.disks.{$disk}.temporary_url_expiration" ) ) );
+			$expiration = time() + max( 1, (int) config( "filesystem.disks.{$disk}.temporary_url_expiration" ) );
 		}
 
 		return Storage::drive( $disk )->temporary_url( untrailingslashit( $settings['path'] ) . $settings['name'], $expiration );
@@ -175,7 +173,7 @@ class Attachment extends Post {
 			\wp_update_post( $args );
 		}
 
-		return static::find_or_fail( $attachment_id );
+		return static::find( $attachment_id );
 	}
 
 	/**

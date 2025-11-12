@@ -25,7 +25,7 @@ trait Has_Global_Scopes {
 	 *
 	 * @var array<string, array<string, Scope|\Closure>>
 	 */
-	protected static array $global_scopes = [];
+	protected static $global_scopes = [];
 
 	/**
 	 * Register a new global scope on the model.

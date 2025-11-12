@@ -7,17 +7,13 @@
 
 namespace Mantle\Database\Query;
 
-use Mantle\Contracts\Database\Core_Object;
-use Mantle\Contracts\Database\Model_Meta;
-use Mantle\Contracts\Database\Updatable;
-use Mantle\Database\Model\Model;
 use Mantle\Database\Model\Relations\Relation;
-use Mantle\Database\Query\Collection;
+use Mantle\Support\Collection;
 
 /**
  * Support querying against model relationships.
  *
- * @template TModel of Core_Object&Model_Meta&Updatable&Model
+ * @template TModel of \Mantle\Database\Model\Model
  * @mixin \Mantle\Database\Query\Post_Query_Builder<TModel>
  */
 trait Queries_Relationships {
@@ -108,17 +104,14 @@ trait Queries_Relationships {
 
 		$results = Relation::no_constraints(
 			function () use ( $models, $relation ) {
-				if ( ! $relation ) {
-					return Collection::from( [] );
-				}
-
 				// Add the eager constraints from the relation to the query.
-				$relation->add_eager_constraints( $models ); // @phpstan-ignore-line
+				$relation->add_eager_constraints( $models );
 
 				return $relation->get_eager();
 			}
 		);
 
-		return $relation->match( $models, $results ); // @phpstan-ignore-line
+		// @phpstan-ignore return.type
+		return $relation->match( $models, $results );
 	}
 }

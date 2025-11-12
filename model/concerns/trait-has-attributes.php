@@ -105,7 +105,7 @@ trait Has_Attributes {
 			return null;
 		}
 
-		if ( isset( $this->relations ) && array_key_exists( $key, $this->relations ) ) {
+		if ( array_key_exists( $key, $this->relations ) ) {
 			return $this->relations[ $key ];
 		}
 
@@ -125,16 +125,6 @@ trait Has_Attributes {
 	 *                        of Relation.
 	 */
 	protected function get_relationship_from_method( string $method ): mixed {
-		if ( ! method_exists( $this, $method ) ) {
-			throw new LogicException(
-				sprintf(
-					'Call to undefined relationship method %s::%s(). Model does not use the \Mantle\Database\Model\Concerns\Has_Relationships trait.',
-					static::class,
-					$method
-				)
-			);
-		}
-
 		$relation = $this->$method();
 
 		if ( ! $relation instanceof Relation ) {
@@ -150,7 +140,7 @@ trait Has_Attributes {
 		return tap(
 			$relation->get_results(),
 			function ( $relation ) use ( $method ): void {
-				$this->set_relation( $method, $relation ); // @phpstan-ignore-line method.notFound
+				$this->set_relation( $method, $relation );
 			}
 		);
 	}
@@ -374,7 +364,7 @@ trait Has_Attributes {
 	protected function set_enum_castable( string $key, mixed $value ): void {
 		$class = $this->casts[ $key ];
 
-		if ( ! enum_exists( $class ) ) {
+		if ( ! class_exists( $class ) ) {
 			throw new Model_Exception(
 				sprintf(
 					'Enum class [%s] does not exist for attribute [%s].',
@@ -611,9 +601,10 @@ trait Has_Attributes {
 	/**
 	 * Set the accessors to append to model arrays.
 	 *
-	 * @param string ...$appends Accessors to append.
+	 * @param string|string[] ...$appends Accessors to append.
+	 * @return static
 	 */
-	public function set_appends( ...$appends ): static {
+	public function set_appends( ...$appends ) {
 		$this->appends = $appends;
 		return $this;
 	}

@@ -50,11 +50,13 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
 	/** @use Concerns\Has_Factory<TModelObject> */
 	use Concerns\Has_Factory;
 	use Concerns\Has_Global_Scopes;
+	/** @use Concerns\Has_Relationships<static> */
+	use Concerns\Has_Relationships;
 
 	/**
 	 * The array of booted models.
 	 *
-	 * @var array<class-string<Model>, bool>
+	 * @var array<class-string>
 	 */
 	protected static $booted = [];
 
@@ -128,8 +130,6 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
 
 	/**
 	 * Query builder class to use.
-	 *
-	 * @return class-string<\Mantle\Database\Query\Builder>|null
 	 */
 	public static function get_query_builder_class(): ?string {
 		return null;
@@ -290,7 +290,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
 			$method       = 'boot_' . $trait_method;
 
 			if ( method_exists( $class, $method ) && ! in_array( $method, $booted, true ) ) {
-				forward_static_call( [ $class, $method ] ); // @phpstan-ignore-line
+				forward_static_call( [ $class, $method ] );
 
 				$booted[] = $method;
 			}
@@ -377,9 +377,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
 	public function offsetUnset( mixed $offset ): void {
 		$this->set( $offset, null );
 
-		if ( property_exists( $this, 'relations' ) && $this->relations !== null && array_key_exists( $offset, $this->relations ) ) {
-			unset( $this->relations[ $offset ] );
-		}
+		unset( $this->relations[ $offset ] );
 	}
 
 	/**
@@ -439,7 +437,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
 	public function new_query(): Builder {
 		$builder = static::get_query_builder_class();
 
-		if ( ! $builder ) {
+		if ( empty( $builder ) ) {
 			throw new Model_Exception( 'Unknown query builder for model: ' . static::class );
 		}
 
@@ -647,6 +645,6 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
 	 * @param int $options json_encode() options.
 	 */
 	public function to_json( $options = 0 ): string {
-		return (string) wp_json_encode( $this->to_array(), $options );
+		return wp_json_encode( $this->to_array(), $options );
 	}
 }

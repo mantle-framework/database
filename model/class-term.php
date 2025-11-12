@@ -12,7 +12,6 @@ use Mantle\Contracts\Database\Model_Meta;
 use Mantle\Contracts\Database\Updatable;
 use Mantle\Database\Query\Term_Query_Builder;
 use Mantle\Support\Helpers;
-use WP_Term;
 
 use function Mantle\Support\Helpers\stringable;
 
@@ -42,8 +41,6 @@ use function Mantle\Support\Helpers\stringable;
  * @method static \Mantle\Database\Query\Term_Query_Builder<static> or_where_raw( array<string, string>|string $column, ?string $operator = null, mixed $value = null, string $boolean = 'AND' )
  */
 class Term extends Model implements Core_Object, Model_Meta, Updatable {
-	/** @use Concerns\Has_Relationships<static> */
-	use Concerns\Has_Relationships;
 	use Events\Term_Events;
 	use Meta\Model_Meta;
 	use Meta\Term_Meta;
@@ -100,11 +97,7 @@ class Term extends Model implements Core_Object, Model_Meta, Updatable {
 	 * @param \WP_Term|string|int $object Term to retrieve.
 	 */
 	public static function find( mixed $object ): ?static {
-		if ( ! is_numeric( $object ) && ! $object instanceof \WP_Term ) {
-			return null;
-		}
-
-		$term = Helpers\get_term_object( $object instanceof WP_Term ? $object : (int) $object );
+		$term = Helpers\get_term_object( $object );
 
 		if ( empty( $term ) ) {
 			return null;
@@ -144,11 +137,7 @@ PHP
 
 		$full_class_name = "{$namespace}\\{$class_name}";
 
-		$instance = new $full_class_name();
-
-		assert( $instance instanceof self );
-
-		return $instance;
+		return new $full_class_name();
 	}
 
 	/**
@@ -164,11 +153,7 @@ PHP
 	 * @return \Mantle\Database\Query\Term_Query_Builder<static>
 	 */
 	public static function query(): Term_Query_Builder {
-		$builder = ( new static() )->new_query();
-
-		assert( $builder instanceof Term_Query_Builder );
-
-		return $builder;
+		return ( new static() )->new_query();
 	}
 
 	/**
@@ -297,9 +282,9 @@ PHP
 		/**
 		 * Filter the route structure for a term handled through the entity router.
 		 *
-		 * @param string|null $route_structure Route structure.
-		 * @param string|null $object_name Taxonomy name.
-		 * @param string      $object_class Model class name.
+		 * @param string $route_structure Route structure.
+		 * @param string $object_name Taxonomy name.
+		 * @param string $object_class Model class name.
 		 */
 		return (string) apply_filters(
 			'mantle_entity_router_term_route',
